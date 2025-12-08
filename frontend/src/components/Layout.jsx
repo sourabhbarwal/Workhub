@@ -28,6 +28,7 @@
 // export default Layout;
 import { useAuth } from "../context/AuthContext.jsx";
 import { NavLink } from "react-router-dom";
+import { logout } from "../firebase";
 
 const navLinkBase =
   "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition";
@@ -36,6 +37,15 @@ const navLinkActive = "bg-slate-700 text-white shadow";
 
 export default function Layout({ children }) {
   const { user } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (err) {
+      console.error("Logout error:", err);
+    }
+  };
+  
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 flex">
       {/* Sidebar */}
@@ -102,9 +112,21 @@ export default function Layout({ children }) {
               {new Date().toLocaleDateString()}
             </span>
           </div>
-          <button className="text-xs md:text-sm px-3 py-1 rounded-full border border-slate-600 hover:border-indigo-400 hover:text-indigo-300 transition">
-            ⏱ Daily Streak: <span className="font-semibold">0</span>
-          </button>
+          <div className="flex items-center gap-2 text-xs md:text-sm">
+            {user && (
+              <span className="hidden sm:inline text-slate-300">
+                {user.name || user.email}
+              </span>
+            )}
+            <button className="hidden sm:inline text-[11px] px-3 py-1 rounded-full border border-slate-600 hover:border-indigo-400 hover:text-indigo-300 transition">
+              ⏱ Daily Streak: <span className="font-semibold">0</span>
+            </button>
+            <button
+              onClick={handleLogout}
+              className="px-3 py-1 rounded-full border border-slate-600 hover:border-red-400 hover:text-red-300 text-[11px] md:text-xs transition">
+              Logout
+            </button>
+          </div>
         </header>
 
         {/* Page content */}
