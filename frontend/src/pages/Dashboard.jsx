@@ -225,7 +225,7 @@ export default function Dashboard() {
             Plan your work across boards and track today&apos;s progress.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2 text-xs items-center">
+        {/* <div className="flex flex-wrap gap-2 text-xs items-center">
           <input
             className="px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-900 text-slate-100 w-40"
             placeholder="New task title…"
@@ -244,7 +244,7 @@ export default function Dashboard() {
           >
             + Add Task
           </button>
-        </div>
+        </div> */}
       </header>
 
       {suggestion && (

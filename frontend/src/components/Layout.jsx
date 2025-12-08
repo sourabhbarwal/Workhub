@@ -1,30 +1,3 @@
-// import { Link } from "react-router-dom";
-// import "./Layout.css";
-
-// function Layout({ children }) {
-//   return (
-//     <div className="layout">
-//       <nav className="sidebar">
-//         <h2>WorkHub Lite</h2>
-//         <ul>
-//           <li>
-//             <Link to="/dashboard">Dashboard</Link>
-//           </li>
-//           <li>
-//             <Link to="/focus">Focus Mode</Link>
-//           </li>
-//           <li>
-//             <Link to="/stats">Stats</Link>
-//           </li>
-//         </ul>
-//       </nav>
-//       <main className="content">
-//         {children}
-//       </main>
-//     </div>
-//   );
-// }
-
 // export default Layout;
 import { useAuth } from "../context/AuthContext.jsx";
 import { NavLink } from "react-router-dom";
@@ -43,13 +16,14 @@ export default function Layout({ children }) {
       await logout();
     } catch (err) {
       console.error("Logout error:", err);
+      alert("Could not log out. Please try again.");
     }
   };
   
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 flex">
       {/* Sidebar */}
-      <aside className="hidden md:flex flex-col w-60 border-r border-slate-800 bg-slate-950/70">
+      <aside className="hidden md:flex flex-col w-60 border-r border-slate-800 bg-slate-950/70 shrink-0">
         <div className="px-5 py-4 border-b border-slate-800">
           <h1 className="text-lg font-semibold tracking-tight">
             WorkHub <span className="text-indigo-400">Lite</span>
@@ -59,11 +33,11 @@ export default function Layout({ children }) {
           </p>
         </div>
 
-        <nav className="flex-1 px-3 py-4 space-y-1">
+        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
           <NavLink
             to="/dashboard"
             className={({ isActive }) =>
-              `${navLinkBase} ${isActive ? navLinkActive : navLinkInactive}`
+              `${navLinkBase} ${isActive ? navLinkActive : navLinkInactive} w-full block`
             }
           >
             <span>📋</span>
@@ -73,7 +47,7 @@ export default function Layout({ children }) {
           <NavLink
             to="/focus"
             className={({ isActive }) =>
-              `${navLinkBase} ${isActive ? navLinkActive : navLinkInactive}`
+              `${navLinkBase} ${isActive ? navLinkActive : navLinkInactive} w-full block`
             }
           >
             <span>🎯</span>
@@ -83,7 +57,7 @@ export default function Layout({ children }) {
           <NavLink
             to="/stats"
             className={({ isActive }) =>
-              `${navLinkBase} ${isActive ? navLinkActive : navLinkInactive}`
+              `${navLinkBase} ${isActive ? navLinkActive : navLinkInactive} w-full block`
             }
           >
             <span>📊</span>
@@ -92,15 +66,25 @@ export default function Layout({ children }) {
         </nav>
 
        <div className="px-4 py-3 border-t border-slate-800 text-xs text-slate-400">
-        Logged in as{" "}
-        <span className="text-slate-200 font-medium">
-          {user?.name || user?.email}
-        </span>
-      </div>
+          <div className="flex flex-col gap-1">
+            <div>
+              Logged in as{" "}
+              <span className="text-slate-200 font-medium">
+                {user?.displayName ||  user?.email}
+              </span>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="self-start text-[11px] px-2 py-1 rounded-lg border border-slate-700 hover:border-red-400 hover:text-red-300"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
       </aside>
 
       {/* Main area */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col w-full h-full overflow-hidden">
         {/* Top bar */}
         <header className="h-14 border-b border-slate-800 flex items-center justify-between px-4 md:px-6 bg-slate-950/80 backdrop-blur">
           <div className="md:hidden font-semibold">
@@ -112,10 +96,10 @@ export default function Layout({ children }) {
               {new Date().toLocaleDateString()}
             </span>
           </div>
-          <div className="flex items-center gap-2 text-xs md:text-sm">
+          <div className="flex items-center gap-2">
             {user && (
-              <span className="hidden sm:inline text-slate-300">
-                {user.name || user.email}
+              <span className="hidden md:inline text-xs text-slate-400">
+                {user?.displayName || user?.name || user?.email}
               </span>
             )}
             <button className="hidden sm:inline text-[11px] px-3 py-1 rounded-full border border-slate-600 hover:border-indigo-400 hover:text-indigo-300 transition">
@@ -123,14 +107,14 @@ export default function Layout({ children }) {
             </button>
             <button
               onClick={handleLogout}
-              className="px-3 py-1 rounded-full border border-slate-600 hover:border-red-400 hover:text-red-300 text-[11px] md:text-xs transition">
+              className="text-xs px-3 py-1 rounded-full border border-slate-600 hover:border-red-400 hover:text-red-300">
               Logout
             </button>
           </div>
         </header>
 
         {/* Page content */}
-        <main className="flex-1 p-4 md:p-6">{children}</main>
+        <main className="flex-1 w-full h-full overflow-y-auto p-4 md:p-6 bg-slate-900">{children}</main>
       </div>
     </div>
   );
