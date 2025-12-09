@@ -1,7 +1,5 @@
-// backend/models/Task.js
-const { Schema, model } = require("mongoose");
-
-const taskSchema = new Schema(
+const mongoose = require("mongoose");
+const taskSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
     description: String,
@@ -9,12 +7,32 @@ const taskSchema = new Schema(
       type: String,
       enum: ["todo", "in-progress", "done"],
       default: "todo",
+      index: true,
     },
     dueDate: Date,
-    userId: { type: String, required: true }, // Firebase uid later
     completedAt: Date,
+
+    // link to user
+    userFirebaseUid: {
+      type: String,
+      required: true,
+      index: true,
+    },
+    
+    userId: {
+      type: String,
+      index: true,
+    },
+
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
   },
   { timestamps: true }
 );
 
-module.exports = model("Task", taskSchema);
+// helpful indexes
+taskSchema.index({ userFirebaseUid: 1, status: 1, dueDate: 1 });
+
+module.exports = mongoose.model("Task", taskSchema);

@@ -1,8 +1,9 @@
+// frontend/src/pages/Dashboard.jsx
 import { useEffect, useState } from "react";
 import { api } from "../api";
 import { useAuth } from "../context/AuthContext.jsx";
 
-function Column({ title, tasks, accent, onStatusChange }) {
+function Column({ title, tasks, accent, onStatusChange, onDelete }) {
   return (
     <div className="flex-1 bg-slate-900/60 border border-slate-800 rounded-2xl p-3 md:p-4 flex flex-col min-h-[260px]">
       <div className="flex items-center justify-between mb-3">
@@ -18,10 +19,8 @@ function Column({ title, tasks, accent, onStatusChange }) {
         {tasks.map((task) => (
           <div
             key={task._id}
-            className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs hover:border-indigo-400/70 hover:shadow-md transition">
-            {/* <div className="font-medium text-slate-100 truncate">
-              {task.title}
-            </div> */}
+            className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs hover:border-indigo-400/70 hover:shadow-md transition group"
+          >
             <div className="flex justify-between gap-2 items-start">
               <div className="flex-1 min-w-0">
                 <div className="font-medium text-slate-100 truncate">
@@ -34,7 +33,7 @@ function Column({ title, tasks, accent, onStatusChange }) {
                 )}
               </div>
               <button
-                onClick={() => onDelete(task._id)}
+                onClick={() => onDelete && onDelete(task._id)}
                 className="opacity-0 group-hover:opacity-100 text-[11px] text-slate-500 hover:text-red-400 transition"
                 title="Delete task"
               >
@@ -77,8 +76,8 @@ export default function Dashboard() {
   const [tasks, setTasks] = useState([]);
   const [newTitle, setNewTitle] = useState("");
   const [newDescription, setNewDescription] = useState("");
-  const [suggestion, setSuggestion] = useState("");
   const [newDueDate, setNewDueDate] = useState("");
+  const [suggestion, setSuggestion] = useState("");
   const [loading, setLoading] = useState(true);
   const [errorText, setErrorText] = useState("");
 
@@ -140,14 +139,6 @@ export default function Dashboard() {
   }, [userId]);
 
   const handleCreateTask = async () => {
-    // console.log("▶ handleCreateTask clicked");
-    // console.log("newTitle =", newTitle);
-    // console.log("userId =", userId);
-
-    // if (!newTitle.trim() || !userId) {
-    //   console.log("❌ Missing title or userId, not sending request");
-    //   return;
-    // }
     setErrorText("");
     if (!newTitle.trim()) {
       setErrorText("Task title is required.");
@@ -157,6 +148,7 @@ export default function Dashboard() {
       setErrorText("User not found. Please log in again.");
       return;
     }
+
     try {
       const res = await api.post("/tasks", {
         title: newTitle,
@@ -165,7 +157,6 @@ export default function Dashboard() {
         status: "todo",
         dueDate: newDueDate || null,
       });
-      console.log("✅ Task created:", res.data);
       setTasks((prev) => {
         const updated = [res.data, ...prev];
         updateSuggestion(updated);
@@ -180,22 +171,6 @@ export default function Dashboard() {
     }
   };
 
-  const handleDeleteTask = async (id) => {
-    if (!window.confirm("Delete this task?")) return;
-    try {
-      await api.delete(`/tasks/${id}`);
-      setTasks((prev) => {
-        const updated = prev.filter((t) => t._id !== id);
-        updateSuggestion(updated);
-        return updated;
-      });
-    } catch (err) {
-      console.error("Delete task error", err);
-      setErrorText("Could not delete task.");
-    }
-  };
-
-
   const handleStatusChange = async (id, newStatus) => {
     try {
       const res = await api.put(`/tasks/${id}`, { status: newStatus });
@@ -207,6 +182,23 @@ export default function Dashboard() {
     } catch (err) {
       console.error("Update status error", err);
       setErrorText("Could not update task status.");
+    }
+  };
+
+  const handleDeleteTask = async (id) => {
+    console.log("Deleting task", id);
+    const ok = window.confirm("Delete this task?");
+    if (!ok) return;
+    try {
+      await api.delete(`/tasks/${id}`);
+      setTasks((prev) => {
+        const updated = prev.filter((t) => t._id !== id);
+        updateSuggestion(updated);
+        return updated;
+      });
+    } catch (err) {
+      console.error("Delete task error", err);
+      setErrorText("Could not delete task.");
     }
   };
 
@@ -225,26 +217,6 @@ export default function Dashboard() {
             Plan your work across boards and track today&apos;s progress.
           </p>
         </div>
-        {/* <div className="flex flex-wrap gap-2 text-xs items-center">
-          <input
-            className="px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-900 text-slate-100 w-40"
-            placeholder="New task title…"
-            value={newTitle}
-            onChange={(e) => setNewTitle(e.target.value)}
-          />
-          <input
-            type="date"
-            className="px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-900 text-slate-100"
-            value={newDueDate}
-            onChange={(e) => setNewDueDate(e.target.value)}
-          />
-          <button
-            onClick={handleCreateTask}
-            className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-slate-50 font-medium"
-          >
-            + Add Task
-          </button>
-        </div> */}
       </header>
 
       {suggestion && (
@@ -253,6 +225,7 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* Quick add task */}
       <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-2">
         <h2 className="text-sm font-semibold text-slate-100">
           Quick add task
