@@ -15,20 +15,19 @@ const userSchema = new mongoose.Schema(
     },
     name: String,
     photoURL: String,
-
-    // App-specific settings you can add later
-    theme: {
+    role: {
       type: String,
-      default: "dark",
+      enum: ["admin", "member"],
+      required: true,
     },
-    defaultSessionMinutes: {
-      type: Number,
-      default: 25,
+    provider: String, // "password", "google.com", etc.
+    teamId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Team",
+      default: null,
     },
-
-    lastLoginAt: Date,
   },
-  { timestamps: true } // adds createdAt, updatedAt
+  { timestamps: true }
 );
 
 module.exports = mongoose.model("User", userSchema);

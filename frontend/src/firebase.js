@@ -1,6 +1,7 @@
 // frontend/src/firebase.js
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, setPersistence,browserLocalPersistence,
+  createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAL2z3ETmp_HpvBE7E5niDn-uqqy-f5s9k",
@@ -12,11 +13,32 @@ const firebaseConfig = {
   measurementId: "G-FX9YLZECSZ"
 };
 
+// const app = initializeApp(firebaseConfig);
+// export const auth = getAuth(app);
+// setPersistence(auth, browserLocalPersistence);
+
+// export const provider = new GoogleAuthProvider();
+
+// export const signInWithGoogle = () => signInWithPopup(auth, provider);
+// export const logout = () => signOut(auth);
+
+// export default app;
+
 const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const provider = new GoogleAuthProvider();
+const auth = getAuth(app);
 
-export const signInWithGoogle = () => signInWithPopup(auth, provider);
+// stay logged in across tabs/browser restarts
+setPersistence(auth, browserLocalPersistence);
+
+const googleProvider = new GoogleAuthProvider();
+
+// helper exported functions
+export {
+  auth,
+  googleProvider,
+  signInWithPopup,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+};
+
 export const logout = () => signOut(auth);
-
-export default app;

@@ -5,6 +5,8 @@ import FocusMode from "./pages/FocusMode.jsx";
 import Stats from "./pages/Stats.jsx";
 import Layout from "./components/Layout.jsx";
 import { useAuth } from "./context/AuthContext.jsx";
+import AdminPanel from "./pages/AdminPanel.jsx";
+import ProtectedRoute from "./components/ProtectedRoute.jsx";
 
 function App() {
   const { user, loading } = useAuth();
@@ -24,10 +26,12 @@ function App() {
   return (
     <Layout>
       <Routes>
-        <Route path="/" element={<Navigate to="/dashboard" />} />
+        {/* <Route path="/" element={<Navigate to="/dashboard" />} /> */}
+        <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/focus" element={<FocusMode />} />
         <Route path="/stats" element={<Stats />} />
+        <Route path="/admin" element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
       </Routes>
     </Layout>
   );

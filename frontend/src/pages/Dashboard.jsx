@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { api } from "../api";
 import { useAuth } from "../context/AuthContext.jsx";
 
+// ---------- Column component ----------
 function Column({ title, tasks, accent, onStatusChange, onDelete }) {
   return (
     <div className="flex-1 bg-slate-900/60 border border-slate-800 rounded-2xl p-3 md:p-4 flex flex-col min-h-[260px]">
@@ -69,18 +70,28 @@ function Column({ title, tasks, accent, onStatusChange, onDelete }) {
   );
 }
 
+// ---------- Dashboard ----------
 export default function Dashboard() {
   const { user } = useAuth();
-  const userId = user?.uid;
+
+  // allow either shape: user.firebaseUid (from backend) or user.uid (raw Firebase)
+  const firebaseUid = user?.firebaseUid || user?.uid || null;
 
   const [tasks, setTasks] = useState([]);
-  const [newTitle, setNewTitle] = useState("");
-  const [newDescription, setNewDescription] = useState("");
-  const [newDueDate, setNewDueDate] = useState("");
   const [suggestion, setSuggestion] = useState("");
   const [loading, setLoading] = useState(true);
   const [errorText, setErrorText] = useState("");
 
+  const [teams, setTeams] = useState([]);
+  // "personal" = personal board, otherwise holds team._id
+  const [selectedBoard, setSelectedBoard] = useState("personal");
+
+  // Quick-add inputs
+  const [newTaskTitle, setNewTaskTitle] = useState("");
+  const [newTaskDescription, setNewTaskDescription] = useState("");
+  const [newTaskDueDate, setNewTaskDueDate] = useState("");
+
+  // ---------- Suggestion text ----------
   const updateSuggestion = (allTasks) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -115,16 +126,30 @@ export default function Dashboard() {
     }
   };
 
+  // ---------- Fetch tasks ----------
   const fetchTasks = async () => {
-    if (!userId) return;
+    if (!firebaseUid) return;
     setLoading(true);
     setErrorText("");
+
     try {
-      const res = await api.get("/tasks", {
-        params: { userId },
-      });
-      setTasks(res.data);
-      updateSuggestion(res.data);
+      const params =
+        selectedBoard === "personal"
+          ? { userId: firebaseUid } // all tasks created by this user
+          : { teamId: selectedBoard }; // all tasks for this team (any member)
+
+      const res = await api.get("/tasks", { params });
+      const raw = res.data || [];
+
+      // PERSONAL BOARD → show only tasks with NO teamId
+      // TEAM BOARD → show only tasks of that team (backend already filtered by teamId)
+      const filtered =
+        selectedBoard === "personal"
+          ? raw.filter((t) => !t.teamId) // personal-only
+          : raw; // already team-only
+
+      setTasks(filtered);
+      updateSuggestion(filtered);
     } catch (err) {
       console.error("Fetch tasks error", err);
       setErrorText("Could not load tasks. Please try again.");
@@ -133,44 +158,140 @@ export default function Dashboard() {
     }
   };
 
-  useEffect(() => {
-    fetchTasks();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
-
-  const handleCreateTask = async () => {
-    setErrorText("");
-    if (!newTitle.trim()) {
-      setErrorText("Task title is required.");
-      return;
-    }
-    if (!userId) {
-      setErrorText("User not found. Please log in again.");
-      return;
-    }
-
+  // ---------- Fetch teams ----------
+  const fetchTeams = async () => {
+    if (!firebaseUid) return;
     try {
-      const res = await api.post("/tasks", {
-        title: newTitle,
-        description: newDescription.trim() || null,
-        userId,
-        status: "todo",
-        dueDate: newDueDate || null,
+      const res = await api.get("/teams/forUser", {
+        params: { firebaseUid },
       });
-      setTasks((prev) => {
-        const updated = [res.data, ...prev];
-        updateSuggestion(updated);
-        return updated;
-      });
-      setNewTitle("");
-      setNewDescription("");
-      setNewDueDate("");
+      setTeams(res.data || []);
     } catch (err) {
-      console.error("Create task error", err);
-      setErrorText("Could not create task. Please try again.");
+      console.error("Dashboard teams fetch error:", err);
     }
   };
 
+  // Load teams when user changes
+  useEffect(() => {
+    fetchTeams();
+  }, [firebaseUid]);
+
+  // Load tasks whenever user or selected board changes
+  useEffect(() => {
+    fetchTasks();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [firebaseUid, selectedBoard]);
+
+  // ---------- Create task ----------
+//   const handleCreateTask = async () => {
+//   try {
+//     setErrorText("");
+
+//     if (!newTaskTitle.trim()) {
+//       setErrorText("Task title is required.");
+//       return;
+//     }
+
+//     if (!newTaskDueDate) {
+//       setErrorText("Due date is required.");
+//       return;
+//     }
+
+//     const todayStr = new Date().toISOString().split("T")[0];
+
+//     // newTaskDueDate and todayStr are both "YYYY-MM-DD"
+//     if (newTaskDueDate < todayStr) {
+//       setErrorText("Due date cannot be in the past.");
+//       return;
+//     }
+
+//     const payload = {
+//       title: newTaskTitle.trim(),
+//       description: newTaskDescription.trim(),
+//       status: "todo",
+//       dueDate: newTaskDueDate,
+//     };
+
+//     if (selectedBoard === "personal") {
+//       payload.userFirebaseUid = user.firebaseUid;
+//     } else {
+//       payload.teamId = selectedBoard; // team board
+//     }
+
+//     // 🔥 use api instead of axios
+//     await api.post("/tasks", payload);
+
+//     setNewTaskTitle("");
+//     setNewTaskDescription("");
+//     setNewTaskDueDate("");
+
+//     fetchTasks();
+//   } catch (error) {
+//     console.error("Quick add task error", error);
+//     setErrorText("Could not create task. Please try again.");
+//   }
+// };
+
+  const handleCreateTask = async () => {
+  try {
+    setErrorText("");
+
+    if (!newTaskTitle.trim()) {
+      setErrorText("Task title is required.");
+      return;
+    }
+
+    if (!newTaskDueDate) {
+      setErrorText("Due date is required.");
+      return;
+    }
+
+    const todayStr = new Date().toISOString().split("T")[0];
+
+    // Prevent past dates
+    if (newTaskDueDate < todayStr) {
+      setErrorText("Due date cannot be in the past.");
+      return;
+    }
+
+    // Base payload (dueDate is compulsory now)
+    const payload = {
+      title: newTaskTitle.trim(),
+      description: newTaskDescription.trim(),
+      status: "todo",
+      dueDate: newTaskDueDate,
+    };
+
+    // 🧠 Personal vs Team logic
+    if (!selectedBoard || selectedBoard === "personal") {
+      // Personal dashboard → send userId as your firebase uid
+      payload.userId = user.uid;          // 🔥 IMPORTANT: backend expects userId
+    } else {
+      // Team dashboard → team task
+      payload.userId = user.uid;          // creator / owner
+      payload.teamId = selectedBoard;     // team _id
+    }
+
+    await api.post("/tasks", payload);
+
+    // Reset form
+    setNewTaskTitle("");
+    setNewTaskDescription("");
+    setNewTaskDueDate("");
+
+    // Reload tasks
+    fetchTasks();
+  } catch (error) {
+    console.error("Quick add task error", error);
+    if (error.response?.data) {
+      console.log("Server says:", error.response.data);
+    }
+    setErrorText("Could not create task. Please try again.");
+  }
+};
+
+
+  // ---------- Update status ----------
   const handleStatusChange = async (id, newStatus) => {
     try {
       const res = await api.put(`/tasks/${id}`, { status: newStatus });
@@ -185,8 +306,8 @@ export default function Dashboard() {
     }
   };
 
+  // ---------- Delete task ----------
   const handleDeleteTask = async (id) => {
-    console.log("Deleting task", id);
     const ok = window.confirm("Delete this task?");
     if (!ok) return;
     try {
@@ -205,17 +326,31 @@ export default function Dashboard() {
   const todo = tasks.filter((t) => t.status === "todo");
   const inProgress = tasks.filter((t) => t.status === "in-progress");
   const done = tasks.filter((t) => t.status === "done");
+  const todayDateStr = new Date().toISOString().split("T")[0];
 
+
+  // ---------- JSX ----------
   return (
     <div className="space-y-4">
       <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-        <div>
-          <h1 className="text-xl md:text-2xl font-semibold text-slate-50">
-            Dashboard
-          </h1>
-          <p className="text-xs md:text-sm text-slate-400 mt-1">
-            Plan your work across boards and track today&apos;s progress.
-          </p>
+        <div className="flex flex-wrap items-center gap-3 mb-4 w-full">
+          <h1 className="text-2xl font-semibold text-slate-50">Dashboard</h1>
+
+          <div className="ml-auto flex items-center gap-2 text-xs">
+            <span className="text-slate-400">Board:</span>
+            <select
+              value={selectedBoard}
+              onChange={(e) => setSelectedBoard(e.target.value)}
+              className="px-2 py-1 rounded-lg bg-slate-900 border border-slate-700 text-slate-100 text-xs"
+            >
+              <option value="personal">Personal</option>
+              {teams.map((t) => (
+                <option key={t._id} value={t._id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </header>
 
@@ -234,14 +369,16 @@ export default function Dashboard() {
           <input
             className="flex-1 px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-900 text-slate-100"
             placeholder="Task title (required)…"
-            value={newTitle}
-            onChange={(e) => setNewTitle(e.target.value)}
+            type="text"
+            value={newTaskTitle}
+            onChange={(e) => setNewTaskTitle(e.target.value)}
           />
           <input
             type="date"
             className="px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-900 text-slate-100"
-            value={newDueDate}
-            onChange={(e) => setNewDueDate(e.target.value)}
+            value={newTaskDueDate}
+            onChange={(e) => setNewTaskDueDate(e.target.value)}
+            min={todayDateStr}
           />
           <button
             onClick={handleCreateTask}
@@ -254,8 +391,8 @@ export default function Dashboard() {
           className="mt-2 w-full px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-900 text-slate-100 text-xs"
           rows={2}
           placeholder="Optional description…"
-          value={newDescription}
-          onChange={(e) => setNewDescription(e.target.value)}
+          value={newTaskDescription}
+          onChange={(e) => setNewTaskDescription(e.target.value)}
         />
         {errorText && (
           <div className="text-[11px] text-red-300 mt-1">{errorText}</div>
