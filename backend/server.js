@@ -1,51 +1,41 @@
-// backend/server.js
+// server/server.js
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 require("dotenv").config();
 
+const usersRoute = require("./routes/users");
+const tasksRoute = require("./routes/tasks");
+const teamsRoute = require("./routes/teams");
+
 const app = express();
 
-// ====== MIDDLEWARE ======
-app.use(
-  cors({
-    origin: "http://localhost:5173", // Vite dev server
-    credentials: true,
-  })
-);
+app.use(cors());
 app.use(express.json());
 
-// ====== MONGO CONNECTION ======
-const MONGO_URI = process.env.MONGODB_URI || process.env.MONGO_URI;
-
-if (!MONGO_URI) {
-  console.error("❌ No MONGODB_URI or MONGO_URI in .env");
-  process.exit(1);
-}
+// Mongo connection
+const MONGODB_URI =
+  process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/focus_track";
 
 mongoose
-  .connect(MONGO_URI)
+  .connect(MONGODB_URI)
   .then(() => console.log("✅ MongoDB connected"))
   .catch((err) => {
     console.error("❌ MongoDB connection error:", err);
     process.exit(1);
   });
 
-// ====== ROUTES ======
-const taskRoutes = require("./routes/taskRoutes");
-const userRoutes = require("./routes/userRoutes");
-const teamRoutes = require("./routes/teamRoutes");
+// Routes
+app.use("/users", usersRoute);
+app.use("/tasks", tasksRoute);
+app.use("/teams", teamsRoute);
 
-app.use("/tasks", taskRoutes);
-app.use("/users", userRoutes);
-app.use("/teams", teamRoutes);
-
+// Health check
 app.get("/", (req, res) => {
-  res.send("FocusTrack backend running 🚀");
+  res.json({ ok: true, message: "FocusTrack API running" });
 });
 
-// ====== START SERVER ======
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🚀 Server listening on http://localhost:${PORT}`);
 });

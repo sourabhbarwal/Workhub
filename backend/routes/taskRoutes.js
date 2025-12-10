@@ -1,186 +1,341 @@
-// backend/routes/taskRoutes.js
+// server/routes/tasks.js
 const express = require("express");
+const mongoose = require("mongoose");
 const router = express.Router();
-const Task = require("../models/Task");
 
-// GET /tasks?userId=... OR /tasks?teamId=...
-// - Personal board:  /tasks?userId=<firebaseUid>
-// - Team board:      /tasks?teamId=<teamId>
+const Task = require("../models/Task");
+const User = require("../models/User");
+
+// Helper: normalize date to YYYY-MM-DD for comparing days
+function normalizeDate(d) {
+  const dt = new Date(d);
+  dt.setHours(0, 0, 0, 0);
+  return dt;
+}
+
+// Helper: validate due date (required + not past)
+function validateDueDate(dueDateStr) {
+  if (!dueDateStr) {
+    return { ok: false, message: "Due date is required" };
+  }
+  const d = new Date(dueDateStr);
+  if (isNaN(d.getTime())) {
+    return { ok: false, message: "Invalid due date" };
+  }
+  const today = normalizeDate(new Date());
+  const due = normalizeDate(d);
+  if (due < today) {
+    return {
+      ok: false,
+      message: "Due date cannot be in the past. Use today or a future date.",
+    };
+  }
+  return { ok: true, date: d };
+}
+
+// Helper: build completion score
+// - done on/before due: 100
+// - done late: 100 - 10 * daysLate (min 10)
+// - not done: 0
+function computeCompletionScore(task) {
+  if (task.status !== "done" || !task.completedAt || !task.dueDate) {
+    return 0;
+  }
+
+  const due = normalizeDate(task.dueDate);
+  const completed = normalizeDate(task.completedAt);
+  const diffMs = completed - due;
+  const daysLate = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (daysLate <= 0) return 100;
+
+  const score = 100 - daysLate * 10;
+  return score < 10 ? 10 : score;
+}
+
+// ─────────────────────────
+// GET /tasks
+// query:
+//   - userFirebaseUid or userId (personal tasks)
+//   - teamId (team tasks)
+// ─────────────────────────
 router.get("/", async (req, res) => {
   try {
-    const { userId, teamId } = req.query;
+    const { userFirebaseUid, userId, teamId } = req.query;
 
-    if (!userId && !teamId) {
-      return res
-        .status(400)
-        .json({ message: "userId or teamId is required in query params" });
+    const filter = {};
+
+    if (teamId) {
+      if (!mongoose.Types.ObjectId.isValid(teamId)) {
+        return res.status(400).json({ message: "Invalid teamId" });
+      }
+      filter.teamId = new mongoose.Types.ObjectId(teamId);
+    } else {
+      // personal tasks
+      const uid = userFirebaseUid || userId;
+      if (!uid) {
+        return res.status(400).json({
+          message:
+            "Provide userFirebaseUid/userId for personal tasks or teamId for team tasks.",
+        });
+      }
+      filter.userFirebaseUid = uid;
+      filter.teamId = null;
     }
 
-    const query = {};
-    if (userId) query.userId = userId;
-    if (teamId) query.teamId = teamId;
+    const tasks = await Task.find(filter).sort({ dueDate: 1, createdAt: -1 });
 
-    const tasks = await Task.find(query).sort({ createdAt: -1 });
-    return res.json(tasks);
+    res.json(tasks);
   } catch (err) {
-    console.error("Error fetching tasks:", err);
-    return res.status(500).json({ message: "Server error while fetching tasks" });
+    console.error("GET /tasks error:", err);
+    res.status(500).json({ message: "Failed to load tasks" });
   }
 });
 
-// --- STATS ENDPOINT ---
-// GET /tasks/stats?userId=...
-// Used by Layout.jsx to show streak / summary.
-// This returns simple aggregate numbers. You can extend later if needed.
-router.get("/stats", async (req, res) => {
-  try {
-    const { userId } = req.query;
-
-    if (!userId) {
-      return res.status(400).json({ message: "userId is required" });
-    }
-
-    // All tasks for this user (personal + team-created-by-them)
-    const tasks = await Task.find({ userId });
-
-    const totalTasks = tasks.length;
-    const completedTasks = tasks.filter((t) => t.status === "done").length;
-    const completionRate = totalTasks
-      ? Math.round((completedTasks / totalTasks) * 100)
-      : 0;
-
-    // Simple placeholder streak logic: you can improve later
-    const streak = 0;
-
-    return res.json({
-      totalTasks,
-      completedTasks,
-      completionRate,
-      streak,
-    });
-  } catch (err) {
-    console.error("Error fetching task stats:", err);
-    return res.status(500).json({ message: "Server error while fetching stats" });
-  }
-});
-
+// ─────────────────────────
 // POST /tasks
 // Body:
-// {
-//   title: string (required),
-//   description?: string,
-//   status?: "todo" | "in-progress" | "done",
-//   dueDate?: ISO string,
-//   userId: string (creator, required),
-//   teamId?: string (if it’s a team task)
-// }
+//   title, description, status?, dueDate (required, not past)
+//   userFirebaseUid (personal) OR teamId (team task)
+// ─────────────────────────
 router.post("/", async (req, res) => {
   try {
-    const { title, description, status, dueDate, userId, teamId } = req.body;
-
-    // if (!title || !userId) {
-    //   return res
-    //     .status(400)
-    //     .json({ message: "title and userId are required" });
-    // }
+    const {
+      title,
+      description,
+      status,
+      dueDate,
+      userFirebaseUid,
+      teamId,
+    } = req.body;
 
     if (!title || !title.trim()) {
-      return res.status(400).json({ message: "Title is required." });
+      return res.status(400).json({ message: "Task title is required" });
     }
 
-    if (!dueDate) {
-      return res.status(400).json({ message: "Due date is required." });
+    // must be either personal OR team
+    if (!userFirebaseUid && !teamId) {
+      return res.status(400).json({
+        message:
+          "Either userFirebaseUid (for personal task) or teamId (for team task) is required.",
+      });
     }
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const due = new Date(dueDate);
-    due.setHours(0, 0, 0, 0);
-
-    if (isNaN(due.getTime())) {
-      return res.status(400).json({ message: "Invalid due date." });
+    const dueValidation = validateDueDate(dueDate);
+    if (!dueValidation.ok) {
+      return res.status(400).json({ message: dueValidation.message });
     }
 
-    if (due < today) {
+    // figure out creator
+    const creatorUid = userFirebaseUid;
+    if (!creatorUid) {
       return res
         .status(400)
-        .json({ message: "Due date cannot be in the past." });
+        .json({ message: "userFirebaseUid (creator) is required" });
     }
-    
-    const task = new Task({
+
+    const creatorUser = await User.findOne({ firebaseUid: creatorUid }).lean();
+    const createdByName =
+      (creatorUser && (creatorUser.name || creatorUser.email)) || "Unknown user";
+
+    const doc = new Task({
       title: title.trim(),
-      description: (description || "").trim(),
+      description: description?.trim() || "",
       status: status || "todo",
-      userId,
+      dueDate: dueValidation.date,
+      userFirebaseUid: userFirebaseUid || null,
       teamId: teamId || null,
-      dueDate: dueDate ? new Date(dueDate) : null,
+      createdByFirebaseUid: creatorUid,
+      createdByName,
+      // completion fields remain null
     });
 
-    const saved = await task.save();
-    return res.status(201).json(saved);
+    const saved = await doc.save();
+    res.status(201).json(saved);
   } catch (err) {
-    console.error("Error creating task:", err);
-    return res.status(500).json({ message: "Server error while creating task" });
+    console.error("POST /tasks error:", err);
+    res.status(500).json({ message: "Failed to create task" });
   }
 });
 
+// ─────────────────────────
 // PUT /tasks/:id
+// Body can contain: title, description, status, dueDate, updatedByFirebaseUid
+// Handles "completed by" tracking automatically.
+// ─────────────────────────
 router.put("/:id", async (req, res) => {
   try {
     const { id } = req.params;
+    const {
+      title,
+      description,
+      status,
+      dueDate,
+      updatedByFirebaseUid,
+    } = req.body;
 
-    const update = {};
-    const allowedFields = [
-      "title",
-      "description",
-      "status",
-      "dueDate",
-      "userId",
-      "teamId",
-    ];
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid task id" });
+    }
 
-    allowedFields.forEach((field) => {
-      if (req.body[field] !== undefined) {
-        if (field === "title" || field === "description") {
-          update[field] = String(req.body[field]).trim();
-        } else if (field === "dueDate" && req.body[field]) {
-          update[field] = new Date(req.body[field]);
-        } else {
-          update[field] = req.body[field];
-        }
-      }
-    });
-
-    const updated = await Task.findByIdAndUpdate(id, update, {
-      new: true,
-    });
-
-    if (!updated) {
+    const task = await Task.findById(id);
+    if (!task) {
       return res.status(404).json({ message: "Task not found" });
     }
 
-    return res.json(updated);
+    const prevStatus = task.status;
+
+    if (title !== undefined) {
+      task.title = title.trim();
+    }
+    if (description !== undefined) {
+      task.description = description.trim();
+    }
+
+    if (dueDate !== undefined) {
+      const dueValidation = validateDueDate(dueDate);
+      if (!dueValidation.ok) {
+        return res.status(400).json({ message: dueValidation.message });
+      }
+      task.dueDate = dueValidation.date;
+    }
+
+    if (status !== undefined) {
+      task.status = status;
+
+      const justCompleted = prevStatus !== "done" && status === "done";
+      const revertedFromDone = prevStatus === "done" && status !== "done";
+
+      if (justCompleted) {
+        const completerUid =
+          updatedByFirebaseUid || task.userFirebaseUid || task.createdByFirebaseUid;
+
+        let completedByName = task.completedByName;
+        if (!completedByName) {
+          const completerUser = await User.findOne({
+            firebaseUid: completerUid,
+          }).lean();
+          completedByName =
+            (completerUser &&
+              (completerUser.name || completerUser.email)) ||
+            "Unknown user";
+        }
+
+        task.completedAt = new Date();
+        task.completedByFirebaseUid = completerUid;
+        task.completedByName = completedByName;
+      } else if (revertedFromDone) {
+        task.completedAt = null;
+        task.completedByFirebaseUid = null;
+        task.completedByName = null;
+      }
+    }
+
+    const saved = await task.save();
+    res.json(saved);
   } catch (err) {
-    console.error("Error updating task:", err);
-    return res.status(500).json({ message: "Server error while updating task" });
+    console.error("PUT /tasks/:id error:", err);
+    res.status(500).json({ message: "Failed to update task" });
   }
 });
 
+// ─────────────────────────
 // DELETE /tasks/:id
+// ─────────────────────────
 router.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const deleted = await Task.findByIdAndDelete(id);
-
     if (!deleted) {
       return res.status(404).json({ message: "Task not found" });
     }
-
-    return res.json({ message: "Task deleted", id: deleted._id });
+    return res.json({ message: "Task deleted successfully" });
   } catch (err) {
     console.error("Error deleting task:", err);
     return res.status(500).json({ message: "Server error while deleting task" });
+  }
+});
+
+// ─────────────────────────
+// GET /tasks/stats?userId=<firebaseUid>
+// Detailed stats for Stats tab
+// ─────────────────────────
+router.get("/stats", async (req, res) => {
+  try {
+    const { userId } = req.query;
+    if (!userId) {
+      return res.status(400).json({ message: "userId (firebaseUid) required" });
+    }
+
+    // Stats on personal tasks only (no teamId)
+    const tasks = await Task.find({
+      userFirebaseUid: userId,
+      teamId: null,
+    }).sort({ createdAt: -1 });
+
+    const totalTasks = tasks.length;
+    const completedTasks = tasks.filter((t) => t.status === "done").length;
+    const pendingTasks = tasks.filter((t) => t.status !== "done").length;
+
+    const now = normalizeDate(new Date());
+    const overdueTasks = tasks.filter((t) => {
+      if (!t.dueDate) return false;
+      const due = normalizeDate(t.dueDate);
+      return t.status !== "done" && due < now;
+    }).length;
+
+    let completedOnTime = 0;
+    let completedLate = 0;
+    let scoreSum = 0;
+
+    const tasksWithExtra = tasks.map((t) => {
+      const completionScore = computeCompletionScore(t);
+
+      let completedAfterDueDate = false;
+      if (t.status === "done" && t.completedAt && t.dueDate) {
+        const due = normalizeDate(t.dueDate);
+        const comp = normalizeDate(t.completedAt);
+        completedAfterDueDate = comp > due;
+        if (completedAfterDueDate) completedLate += 1;
+        else completedOnTime += 1;
+      }
+
+      if (completionScore > 0) scoreSum += completionScore;
+
+      return {
+        _id: t._id,
+        title: t.title,
+        description: t.description,
+        status: t.status,
+        createdAt: t.createdAt,
+        dueDate: t.dueDate,
+        completedAt: t.completedAt,
+        createdByFirebaseUid: t.createdByFirebaseUid,
+        createdByName: t.createdByName,
+        completedByFirebaseUid: t.completedByFirebaseUid,
+        completedByName: t.completedByName,
+        completedAfterDueDate,
+        completionScore,
+      };
+    });
+
+    const avgCompletionScore =
+      completedTasks > 0 ? Math.round(scoreSum / completedTasks) : 0;
+
+    const summary = {
+      totalTasks,
+      completedTasks,
+      pendingTasks,
+      overdueTasks,
+      completedOnTime,
+      completedLate,
+      avgCompletionScore,
+    };
+
+    res.json({ summary, tasks: tasksWithExtra });
+  } catch (err) {
+    console.error("GET /tasks/stats error:", err);
+    res.status(500).json({ message: "Failed to load stats" });
   }
 });
 

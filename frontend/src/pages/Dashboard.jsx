@@ -183,55 +183,6 @@ export default function Dashboard() {
   }, [firebaseUid, selectedBoard]);
 
   // ---------- Create task ----------
-//   const handleCreateTask = async () => {
-//   try {
-//     setErrorText("");
-
-//     if (!newTaskTitle.trim()) {
-//       setErrorText("Task title is required.");
-//       return;
-//     }
-
-//     if (!newTaskDueDate) {
-//       setErrorText("Due date is required.");
-//       return;
-//     }
-
-//     const todayStr = new Date().toISOString().split("T")[0];
-
-//     // newTaskDueDate and todayStr are both "YYYY-MM-DD"
-//     if (newTaskDueDate < todayStr) {
-//       setErrorText("Due date cannot be in the past.");
-//       return;
-//     }
-
-//     const payload = {
-//       title: newTaskTitle.trim(),
-//       description: newTaskDescription.trim(),
-//       status: "todo",
-//       dueDate: newTaskDueDate,
-//     };
-
-//     if (selectedBoard === "personal") {
-//       payload.userFirebaseUid = user.firebaseUid;
-//     } else {
-//       payload.teamId = selectedBoard; // team board
-//     }
-
-//     // 🔥 use api instead of axios
-//     await api.post("/tasks", payload);
-
-//     setNewTaskTitle("");
-//     setNewTaskDescription("");
-//     setNewTaskDueDate("");
-
-//     fetchTasks();
-//   } catch (error) {
-//     console.error("Quick add task error", error);
-//     setErrorText("Could not create task. Please try again.");
-//   }
-// };
-
   const handleCreateTask = async () => {
   try {
     setErrorText("");

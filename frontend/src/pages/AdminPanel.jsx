@@ -1,4 +1,3 @@
-// // frontend/src/pages/AdminPanel.jsx
 // import { useEffect, useState } from "react";
 // import { useAuth } from "../context/AuthContext.jsx";
 // import { api } from "../api";
@@ -14,18 +13,19 @@
 //   const [errorText, setErrorText] = useState("");
 //   const [successText, setSuccessText] = useState("");
 
-//   // previous detail states
-//   const [activeTeamId, setActiveTeamId] = useState(null);
-//   const [activeTeamDetails, setActiveTeamDetails] = useState(null);
+//   const [activeTeam, setActiveTeam] = useState(null);
+//   const [teamDetails, setTeamDetails] = useState(null);
 //   const [detailsLoading, setDetailsLoading] = useState(false);
 
-//   // NEW: modal toggle
-//   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
+//   const [showDetailsModal, setShowDetailsModal] = useState(false);
+//   const [showEditModal, setShowEditModal] = useState(false);
 
 //   const isAdmin = user?.role === "admin";
 //   const adminFirebaseUid = user?.uid;
 
-//   // Fetch all users + all teams created by this admin
+//   // ─────────────────────────────────────
+//   // Fetch users & teams for this admin
+//   // ─────────────────────────────────────
 //   useEffect(() => {
 //     const fetchData = async () => {
 //       if (!adminFirebaseUid || !isAdmin) {
@@ -58,44 +58,11 @@
 //     fetchData();
 //   }, [adminFirebaseUid, isAdmin]);
 
-//   // Load team details (members + progress) and show modal
-//   const loadTeamDetails = async (teamId) => {
-//     if (!teamId) return;
-
-//     setActiveTeamId(teamId);
-//     setDetailsLoading(true);
-//     setErrorText("");
-//     setSuccessText("");
-//     setIsTeamModalOpen(true);        // 🔥 open modal immediately
-//     setActiveTeamDetails(null);      // reset details while loading
-
-//     try {
-//       const res = await api.get("/teams/details", {
-//         params: { teamId },
-//       });
-//       setActiveTeamDetails(res.data);
-//     } catch (err) {
-//       console.error("Team details error:", err);
-//       setErrorText("Could not load team details.");
-//     } finally {
-//       setDetailsLoading(false);
-//     }
-//   };
-
-//   const closeTeamModal = () => {
-//     setIsTeamModalOpen(false);
-//     setActiveTeamId(null);
-//     setActiveTeamDetails(null);
-//   };
-
 //   const toggleSelect = (firebaseUid) => {
 //     setSelected((prev) => {
 //       const copy = new Set(prev);
-//       if (copy.has(firebaseUid)) {
-//         copy.delete(firebaseUid);
-//       } else {
-//         copy.add(firebaseUid);
-//       }
+//       if (copy.has(firebaseUid)) copy.delete(firebaseUid);
+//       else copy.add(firebaseUid);
 //       return copy;
 //     });
 //   };
@@ -140,6 +107,35 @@
 //     }
 //   };
 
+//   // ─────────────────────────────────────
+//   // Open team details modal
+//   // ─────────────────────────────────────
+//   const openTeamDetails = async (team) => {
+//     setActiveTeam(team);
+//     setTeamDetails(null);
+//     setShowDetailsModal(true);
+//     setDetailsLoading(true);
+
+//     try {
+//       const res = await api.get("/teams/details", {
+//         params: { teamId: team._id },
+//       });
+//       setTeamDetails(res.data);
+//     } catch (err) {
+//       console.error("Team details error:", err);
+//       setErrorText("Could not load team details.");
+//     } finally {
+//       setDetailsLoading(false);
+//     }
+//   };
+
+//   const closeTeamModal = () => {
+//     setShowDetailsModal(false);
+//     setTeamDetails(null);
+//     setActiveTeam(null);
+//     setShowEditModal(false);
+//   };
+
 //   if (!user) {
 //     return (
 //       <div className="text-sm text-slate-400">
@@ -159,313 +155,425 @@
 //     );
 //   }
 
-//   return (
-//     <div className="max-w-5xl mx-auto space-y-4">
-//       <header>
-//         <h1 className="text-xl md:text-2xl font-semibold text-slate-50">
-//           Admin Panel
-//         </h1>
-//         <p className="text-xs md:text-sm text-slate-400 mt-1">
-//           Manage users, teams and see an overview of activity.
-//         </p>
-//       </header>
+//   // CSS for animations (self-contained)
+//   const modalAnimations = `
+//     @keyframes modalFadeIn {
+//       from { opacity: 0; }
+//       to { opacity: 1; }
+//     }
+//     @keyframes modalSlideUp {
+//       from { opacity: 0; transform: translateY(18px) scale(0.97); }
+//       to { opacity: 1; transform: translateY(0) scale(1); }
+//     }
+//     @keyframes modalScaleIn {
+//       from { opacity: 0; transform: scale(0.95); }
+//       to { opacity: 1; transform: scale(1); }
+//     }
+//     .modal-fade-in {
+//       animation: modalFadeIn 0.18s ease-out;
+//     }
+//     .modal-slide-up {
+//       animation: modalSlideUp 0.2s ease-out;
+//     }
+//     .modal-scale-in {
+//       animation: modalScaleIn 0.2s ease-out;
+//     }
+//   `;
 
-//       {errorText && (
-//         <div className="text-xs text-red-300 bg-red-900/30 border border-red-700/50 rounded-xl px-3 py-2">
-//           {errorText}
-//         </div>
-//       )}
-//       {successText && (
-//         <div className="text-xs text-emerald-300 bg-emerald-900/20 border border-emerald-700/40 rounded-xl px-3 py-2">
-//           {successText}
-//         </div>
-//       )}
-
-//       {loading ? (
-//         <div className="text-xs text-slate-400">Loading users and teams…</div>
-//       ) : (
-//         <>
-//           {/* Create team from users */}
-//           <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-3">
-//             <h2 className="text-sm font-semibold text-slate-100 mb-2">
-//               Create team from registered users
-//             </h2>
-
-//             <form
-//               className="space-y-3 text-xs md:text-sm"
-//               onSubmit={handleCreateTeam}
-//             >
-//               <div className="space-y-1">
-//                 <label className="block text-slate-300">Team name</label>
-//                 <input
-//                   className="w-full px-3 py-2 rounded-xl border border-slate-700 bg-slate-950 text-slate-100 text-xs md:text-sm"
-//                   placeholder="e.g. Final Year Project Squad"
-//                   value={teamName}
-//                   onChange={(e) => setTeamName(e.target.value)}
-//                 />
-//               </div>
-
-//               <div className="space-y-2">
-//                 <div className="flex items-center justify-between">
-//                   <span className="text-slate-300 text-xs md:text-sm">
-//                     Select members
-//                   </span>
-//                   <span className="text-[11px] text-slate-500">
-//                     {selected.size} selected
-//                   </span>
-//                 </div>
-
-//                 <div className="max-h-60 overflow-y-auto border border-slate-800 rounded-xl">
-//                   {users.length === 0 ? (
-//                     <div className="p-3 text-xs text-slate-500">
-//                       No users registered yet.
-//                     </div>
-//                   ) : (
-//                     <ul className="divide-y divide-slate-800 text-xs md:text-sm">
-//                       {users.map((u) => (
-//                         <li
-//                           key={u.firebaseUid}
-//                           className="flex items-center gap-3 px-3 py-2 hover:bg-slate-800/60"
-//                         >
-//                           <input
-//                             type="checkbox"
-//                             className="w-4 h-4"
-//                             checked={selected.has(u.firebaseUid)}
-//                             onChange={() => toggleSelect(u.firebaseUid)}
-//                             disabled={u.firebaseUid === adminFirebaseUid} // admin will always be added automatically
-//                           />
-//                           <div className="flex-1 min-w-0">
-//                             <div className="flex items-center gap-2">
-//                               <span className="font-medium text-slate-100 truncate">
-//                                 {u.name || u.email}
-//                               </span>
-//                               {u.role === "admin" && (
-//                                 <span className="px-1.5 py-0.5 rounded-full bg-indigo-500/20 text-[10px] text-indigo-200 border border-indigo-500/50">
-//                                   admin
-//                                 </span>
-//                               )}
-//                             </div>
-//                             <div className="text-[11px] text-slate-400 truncate">
-//                               {u.email}
-//                             </div>
-//                           </div>
-//                         </li>
-//                       ))}
-//                     </ul>
-//                   )}
-//                 </div>
-//               </div>
-
-//               <button
-//                 type="submit"
-//                 disabled={creating}
-//                 className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-slate-50 font-medium text-xs md:text-sm"
-//               >
-//                 {creating ? "Creating team…" : "Create team"}
-//               </button>
-//             </form>
-//           </section>
-
-//           {/* Team list */}
-//           <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-2">
-//             <h2 className="text-sm font-semibold text-slate-100 mb-1">
-//               Your teams
-//             </h2>
-//             {teams.length === 0 ? (
-//               <div className="text-xs text-slate-500">
-//                 You haven&apos;t created any teams yet.
-//               </div>
-//             ) : (
-//               <ul className="space-y-2 text-xs md:text-sm">
-//                 {teams.map((t) => (
-//                   <li
-//                     key={t._id}
-//                     className={`border border-slate-800 rounded-xl px-3 py-2 flex items-center justify-between cursor-pointer hover:border-indigo-500/60 ${
-//                       activeTeamId === t._id
-//                         ? "border-indigo-500/80 bg-slate-900"
-//                         : ""
-//                     }`}
-//                     onClick={() => loadTeamDetails(t._id)}
-//                   >
-//                     <div>
-//                       <div className="font-medium text-slate-100">
-//                         {t.name}
-//                       </div>
-//                       <div className="text-[11px] text-slate-500">
-//                         Team ID: <span className="font-mono">{t._id}</span>
-//                       </div>
-//                     </div>
-//                     <div className="text-[11px] text-slate-400">
-//                       Created: {new Date(t.createdAt).toLocaleDateString()}
-//                     </div>
-//                   </li>
-//                 ))}
-//               </ul>
-//             )}
-//           </section>
-//         </>
-//       )}
-
-//       {/* === TEAM DETAILS MODAL (popup) === */}
-//       {isTeamModalOpen && (
-//         <TeamDetailsModal
-//           details={activeTeamDetails}
-//           loading={detailsLoading}
-//           onClose={closeTeamModal}
-//           adminFirebaseUid={adminFirebaseUid}
-//           allUsers={users}
-//           onTeamUpdated={(updatedTeam) => {
-//             // update list
-//             setTeams((prev) =>
-//               prev.map((t) => (t._id === updatedTeam._id ? updatedTeam : t))
-//             );
-//             // refresh details (modal stays open)
-//             loadTeamDetails(updatedTeam._id);
-//             setSuccessText("Team updated successfully.");
-//           }}
-//           onError={(msg) => setErrorText(msg)}
-//         />
-//       )}
-//     </div>
-//   );
-// }
-
-// /**
-//  * Modal showing team details (progress + members + edit form)
-//  */
-// function TeamDetailsModal({
-//   details,
-//   loading,
-//   onClose,
-//   adminFirebaseUid,
-//   allUsers,
-//   onTeamUpdated,
-//   onError,
-// }) {
-//   const team = details?.team;
-//   const stats = details?.stats;
-//   const members = details?.users || [];
+//   const anyModalOpen = showDetailsModal || showEditModal;
 
 //   return (
-//     <div
-//       className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-//       onClick={onClose}
-//     >
+//     <>
+//       <style>{modalAnimations}</style>
+
+//       {/* Background content with smooth zoom + blur when modal open */}
 //       <div
-//         className="bg-slate-950 border border-slate-800 rounded-2xl max-w-3xl w-full mx-4 p-4 md:p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto"
-//         onClick={(e) => e.stopPropagation()}
+//         className="max-w-5xl mx-auto space-y-4"
+//         style={{
+//           transform: anyModalOpen ? "scale(0.98)" : "scale(1)",
+//           filter: anyModalOpen ? "blur(1px)" : "none",
+//           transition: "transform 180ms ease-out, filter 180ms ease-out",
+//         }}
 //       >
-//         {/* Close button */}
-//         <button
-//           onClick={onClose}
-//           className="absolute top-3 right-3 text-slate-400 hover:text-slate-100 text-lg"
-//           aria-label="Close"
-//         >
-//           ✕
-//         </button>
+//         <header>
+//           <h1 className="text-xl md:text-2xl font-semibold text-slate-50">
+//             Admin Panel
+//           </h1>
+//           <p className="text-xs md:text-sm text-slate-400 mt-1">
+//             Manage users, teams and see an overview of activity.
+//           </p>
+//         </header>
 
-//         {loading || !team ? (
-//           <div className="text-sm text-slate-400">Loading team details…</div>
+//         {errorText && (
+//           <div className="text-xs text-red-300 bg-red-900/30 border border-red-700/50 rounded-xl px-3 py-2">
+//             {errorText}
+//           </div>
+//         )}
+//         {successText && (
+//           <div className="text-xs text-emerald-300 bg-emerald-900/20 border border-emerald-700/40 rounded-xl px-3 py-2">
+//             {successText}
+//           </div>
+//         )}
+
+//         {loading ? (
+//           <div className="text-xs text-slate-400">
+//             Loading users and teams…
+//           </div>
 //         ) : (
 //           <>
-//             {/* Header */}
-//             <div className="mb-4 flex items-center justify-between gap-3">
-//               <div>
-//                 <h2 className="text-lg font-semibold text-slate-50 flex items-center gap-2">
-//                   <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-indigo-500/20 text-indigo-300 text-sm">
-//                     👥
-//                   </span>
-//                   {team.name}
-//                 </h2>
-//                 <p className="text-[11px] text-slate-500 mt-1">
-//                   Team ID: <span className="font-mono">{team._id}</span>
-//                 </p>
-//               </div>
-//             </div>
+//             {/* Create team from users */}
+//             <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-3">
+//               <h2 className="text-sm font-semibold text-slate-100 mb-2">
+//                 Create team from registered users
+//               </h2>
 
-//             {/* Progress */}
-//             <div className="space-y-1 mb-4">
-//               <div className="flex items-center justify-between text-xs text-slate-300">
-//                 <span>Progress</span>
-//                 <span>
-//                   {stats.completedTasks}/{stats.totalTasks} tasks done (
-//                   {stats.progressPercent}%)
-//                 </span>
-//               </div>
-//               <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
-//                 <div
-//                   className="h-2 bg-emerald-500"
-//                   style={{ width: `${stats.progressPercent}%` }}
-//                 ></div>
-//               </div>
-//             </div>
+//               <form
+//                 className="space-y-3 text-xs md:text-sm"
+//                 onSubmit={handleCreateTeam}
+//               >
+//                 <div className="space-y-1">
+//                   <label className="block text-slate-300">Team name</label>
+//                   <input
+//                     className="w-full px-3 py-2 rounded-xl border border-slate-700 bg-slate-950 text-slate-100 text-xs md:text-sm"
+//                     placeholder="e.g. Final Year Project Squad"
+//                     value={teamName}
+//                     onChange={(e) => setTeamName(e.target.value)}
+//                   />
+//                 </div>
 
-//             {/* Members */}
-//             <div className="space-y-2 mb-4">
-//               <h3 className="text-xs font-semibold text-slate-200">
-//                 Members
-//               </h3>
-//               {members.length === 0 ? (
-//                 <div className="text-[11px] text-slate-500">
-//                   No user records for this team.
+//                 <div className="space-y-2">
+//                   <div className="flex items-center justify-between">
+//                     <span className="text-slate-300 text-xs md:text-sm">
+//                       Select members
+//                     </span>
+//                     <span className="text-[11px] text-slate-500">
+//                       {selected.size} selected
+//                     </span>
+//                   </div>
+
+//                   <div className="max-h-60 overflow-y-auto border border-slate-800 rounded-xl">
+//                     {users.length === 0 ? (
+//                       <div className="p-3 text-xs text-slate-500">
+//                         No users registered yet.
+//                       </div>
+//                     ) : (
+//                       <ul className="divide-y divide-slate-800 text-xs md:text-sm">
+//                         {users.map((u) => (
+//                           <li
+//                             key={u.firebaseUid}
+//                             className="flex items-center gap-3 px-3 py-2 hover:bg-slate-800/60"
+//                           >
+//                             <input
+//                               type="checkbox"
+//                               className="w-4 h-4"
+//                               checked={selected.has(u.firebaseUid)}
+//                               onChange={() => toggleSelect(u.firebaseUid)}
+//                               disabled={
+//                                 u.firebaseUid === adminFirebaseUid
+//                               } // admin can be added automatically via backend if desired
+//                             />
+//                             <div className="flex-1 min-w-0">
+//                               <div className="flex items-center gap-2">
+//                                 <span className="font-medium text-slate-100 truncate">
+//                                   {u.name || u.email}
+//                                 </span>
+//                                 {u.role === "admin" && (
+//                                   <span className="px-1.5 py-0.5 rounded-full bg-indigo-500/20 text-[10px] text-indigo-200 border border-indigo-500/50">
+//                                     admin
+//                                   </span>
+//                                 )}
+//                               </div>
+//                               <div className="text-[11px] text-slate-400 truncate">
+//                                 {u.email}
+//                               </div>
+//                             </div>
+//                           </li>
+//                         ))}
+//                       </ul>
+//                     )}
+//                   </div>
+//                 </div>
+
+//                 <button
+//                   type="submit"
+//                   disabled={creating}
+//                   className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-slate-50 font-medium text-xs md:text-sm"
+//                 >
+//                   {creating ? "Creating team…" : "Create team"}
+//                 </button>
+//               </form>
+//             </section>
+
+//             {/* Team list */}
+//             <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-2">
+//               <h2 className="text-sm font-semibold text-slate-100 mb-1">
+//                 Your teams
+//               </h2>
+//               {teams.length === 0 ? (
+//                 <div className="text-xs text-slate-500">
+//                   You haven&apos;t created any teams yet.
 //                 </div>
 //               ) : (
-//                 <ul className="space-y-1 text-[11px] md:text-xs">
-//                   {members.map((m) => (
+//                 <ul className="space-y-2 text-xs md:text-sm">
+//                   {teams.map((t) => (
 //                     <li
-//                       key={m.firebaseUid}
-//                       className="flex items-center justify-between border border-slate-800 rounded-lg px-3 py-1.5"
+//                       key={t._id}
+//                       className="border border-slate-800 rounded-xl px-3 py-2 flex items-center justify-between cursor-pointer hover:border-indigo-500/60 hover:bg-slate-900 transition"
+//                       onClick={() => openTeamDetails(t)}
 //                     >
-//                       <div className="flex flex-col">
-//                         <span className="text-slate-100">
-//                           {m.name || m.email}
-//                         </span>
-//                         <span className="text-slate-500">{m.email}</span>
+//                       <div>
+//                         <div className="font-medium text-slate-100">
+//                           {t.name}
+//                         </div>
+//                         <div className="text-[11px] text-slate-500">
+//                           Team ID:{" "}
+//                           <span className="font-mono">{t._id}</span>
+//                         </div>
 //                       </div>
-//                       <span className="px-2 py-0.5 rounded-full bg-slate-800 text-slate-200 text-[10px]">
-//                         {m.role}
-//                       </span>
+//                       <div className="text-[11px] text-slate-400">
+//                         Created:{" "}
+//                         {t.createdAt
+//                           ? new Date(t.createdAt).toLocaleDateString()
+//                           : "-"}
+//                       </div>
 //                     </li>
 //                   ))}
 //                 </ul>
 //               )}
-//             </div>
-
-//             {/* Edit form inside modal */}
-//             <TeamEditForm
-//               adminFirebaseUid={adminFirebaseUid}
-//               allUsers={allUsers}
-//               details={details}
-//               onUpdated={onTeamUpdated}
-//               onError={onError}
-//             />
+//             </section>
 //           </>
 //         )}
 //       </div>
-//     </div>
+
+//       {/* ─────────────────────────────────────
+//           Team details popup (VIEW ONLY)
+//           ───────────────────────────────────── */}
+//       {showDetailsModal && (
+//         <div
+//           onClick={closeTeamModal}
+//           className="fixed inset-0 bg-black/55 backdrop-blur-sm flex items-center justify-center z-50 modal-fade-in"
+//         >
+//           <div
+//             onClick={(e) => e.stopPropagation()}
+//             className="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl w-full max-w-4xl p-6 relative modal-slide-up"
+//           >
+//             <button
+//               onClick={closeTeamModal}
+//               className="absolute top-3 right-4 text-slate-400 hover:text-slate-200 text-lg"
+//             >
+//               ✕
+//             </button>
+
+//             {detailsLoading || !teamDetails ? (
+//               <div className="text-sm text-slate-400">
+//                 Loading team details…
+//               </div>
+//             ) : (
+//               <>
+//                 {/* Header */}
+//                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-4">
+//                   <div>
+//                     <h2 className="text-lg font-semibold text-slate-100">
+//                       {teamDetails.team?.name || "Team"}
+//                     </h2>
+//                     <p className="text-xs text-slate-500">
+//                       Team ID:{" "}
+//                       <span className="font-mono">
+//                         {teamDetails.team?._id}
+//                       </span>
+//                     </p>
+//                   </div>
+//                   <button
+//                     onClick={() => setShowEditModal(true)}
+//                     className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-slate-50 text-xs md:text-sm"
+//                   >
+//                     Edit Details
+//                   </button>
+//                 </div>
+
+//                 {/* Progress */}
+//                 <div className="space-y-1 mb-4">
+//                   <div className="flex items-center justify-between text-xs text-slate-300">
+//                     <span>Progress</span>
+//                     <span>
+//                       {teamDetails.stats?.completedTasks || 0}/
+//                       {teamDetails.stats?.totalTasks || 0} tasks done (
+//                       {teamDetails.stats?.progressPercent || 0}%)
+//                     </span>
+//                   </div>
+//                   <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
+//                     <div
+//                       className="h-2 bg-emerald-500"
+//                       style={{
+//                         width: `${
+//                           teamDetails.stats?.progressPercent || 0
+//                         }%`,
+//                       }}
+//                     ></div>
+//                   </div>
+//                 </div>
+
+//                 <div className="grid md:grid-cols-2 gap-4">
+//                   {/* Members list */}
+//                   <div>
+//                     <h3 className="text-xs font-semibold text-slate-200 mb-2">
+//                       Members
+//                     </h3>
+//                     {teamDetails.users?.length === 0 ? (
+//                       <div className="text-[11px] text-slate-500">
+//                         No user records for this team.
+//                       </div>
+//                     ) : (
+//                       <ul className="space-y-1 text-[11px] md:text-xs">
+//                         {teamDetails.users.map((m) => (
+//                           <li
+//                             key={m.firebaseUid}
+//                             className="flex items-center justify-between border border-slate-800 rounded-lg px-3 py-1.5"
+//                           >
+//                             <div className="flex flex-col">
+//                               <span className="text-slate-100">
+//                                 {m.name || m.email}
+//                               </span>
+//                               <span className="text-slate-500">
+//                                 {m.email}
+//                               </span>
+//                             </div>
+//                             <span className="px-2 py-0.5 rounded-full bg-slate-800 text-slate-200 text-[10px]">
+//                               {m.role}
+//                             </span>
+//                           </li>
+//                         ))}
+//                       </ul>
+//                     )}
+//                   </div>
+
+//                   {/* Tasks list */}
+//                   <div>
+//                     <h3 className="text-xs font-semibold text-slate-200 mb-2">
+//                       Team tasks
+//                     </h3>
+//                     {(() => {
+//                       const tasks = teamDetails.tasks || [];
+//                       if (tasks.length === 0) {
+//                         return (
+//                           <div className="text-[11px] text-slate-500">
+//                             No tasks found for this team.
+//                           </div>
+//                         );
+//                       }
+
+//                       // Optional helper to map creator by firebaseUid if backend doesn't send createdByName
+//                       const memberMap = new Map(
+//                         (teamDetails.users || []).map((u) => [
+//                           u.firebaseUid,
+//                           u,
+//                         ])
+//                       );
+
+//                       return (
+//                         <ul className="space-y-1 text-[11px] md:text-xs">
+//                           {tasks.map((t) => {
+//                             const creatorFromUid =
+//                               t.userFirebaseUid &&
+//                               memberMap.get(t.userFirebaseUid);
+//                             const creatorName =
+//                               t.createdByName ||
+//                               creatorFromUid?.name ||
+//                               creatorFromUid?.email ||
+//                               "Unknown";
+
+//                             const due = t.dueDate
+//                               ? new Date(
+//                                   t.dueDate
+//                                 ).toLocaleDateString()
+//                               : "No due date";
+
+//                             return (
+//                               <li
+//                                 key={t._id}
+//                                 className="border border-slate-800 rounded-lg px-3 py-1.5 flex items-start justify-between gap-2"
+//                               >
+//                                 <div>
+//                                   <div className="text-slate-100 font-medium">
+//                                     {t.title}
+//                                   </div>
+//                                   <div className="text-[11px] text-slate-400">
+//                                     by {creatorName} — due {due}
+//                                   </div>
+//                                 </div>
+//                                 <span
+//                                   className={`text-[11px] px-2 py-0.5 rounded-full self-center ${
+//                                     t.status === "done"
+//                                       ? "bg-emerald-500/20 text-emerald-300"
+//                                       : t.status === "in-progress"
+//                                       ? "bg-amber-500/20 text-amber-300"
+//                                       : "bg-slate-700/50 text-slate-300"
+//                                   }`}
+//                                 >
+//                                   {t.status}
+//                                 </span>
+//                               </li>
+//                             );
+//                           })}
+//                         </ul>
+//                       );
+//                     })()}
+//                   </div>
+//                 </div>
+//               </>
+//             )}
+//           </div>
+//         </div>
+//       )}
+
+//       {/* ─────────────────────────────────────
+//           Edit Team popup (name + members)
+//           ───────────────────────────────────── */}
+//       {showEditModal && teamDetails && (
+//         <TeamEditModal
+//           details={teamDetails}
+//           allUsers={users}
+//           adminFirebaseUid={adminFirebaseUid}
+//           onClose={() => setShowEditModal(false)}
+//           onUpdated={async (updatedDetails) => {
+//             // Update local team details object
+//             setTeamDetails(updatedDetails);
+
+//             // Update main teams list with new team name
+//             setTeams((prev) =>
+//               prev.map((t) =>
+//                 t._id === updatedDetails.team._id ? updatedDetails.team : t
+//               )
+//             );
+
+//             setShowEditModal(false);
+//             setSuccessText("Team updated successfully.");
+//           }}
+//         />
+//       )}
+//     </>
 //   );
 // }
 
 // /**
-//  * Small sub-component to edit team name + members.
+//  * ✏️ Separate Edit Modal for team name + members
 //  */
-// function TeamEditForm({
+// function TeamEditModal({
 //   adminFirebaseUid,
 //   allUsers,
 //   details,
+//   onClose,
 //   onUpdated,
-//   onError,
 // }) {
 //   const [name, setName] = useState(details.team.name);
 //   const [saving, setSaving] = useState(false);
 //   const [selectedMembers, setSelectedMembers] = useState(
-//     new Set(details.team.memberFirebaseUids)
+//     new Set(details.team.memberFirebaseUids || [])
 //   );
 
-//   // keep state in sync when different team is selected
 //   useEffect(() => {
 //     setName(details.team.name);
-//     setSelectedMembers(new Set(details.team.memberFirebaseUids));
+//     setSelectedMembers(new Set(details.team.memberFirebaseUids || []));
 //   }, [details]);
 
 //   const toggleMember = (firebaseUid) => {
@@ -480,94 +588,123 @@
 //   const handleSave = async () => {
 //     try {
 //       setSaving(true);
-//       onError && onError("");
 
-//       const res = await api.put(`/teams/${details.team._id}`, {
+//       // First update the team
+//       await api.put(`/teams/${details.team._id}`, {
 //         adminFirebaseUid,
 //         name,
 //         memberFirebaseUids: Array.from(selectedMembers),
 //       });
 
-//       onUpdated && onUpdated(res.data);
+//       // Then re-fetch fresh details (team + users + stats + tasks)
+//       const refreshed = await api.get("/teams/details", {
+//         params: { teamId: details.team._id },
+//       });
+
+//       onUpdated && onUpdated(refreshed.data);
 //     } catch (err) {
 //       console.error("Update team error:", err);
-//       onError &&
-//         onError(
-//           err?.response?.data?.message || "Failed to update team."
-//         );
 //     } finally {
 //       setSaving(false);
 //     }
 //   };
 
 //   return (
-//     <div className="space-y-3 text-xs md:text-sm mt-3">
-//       <div className="space-y-1">
-//         <label className="block text-slate-300">Edit team name</label>
-//         <input
-//           className="w-full px-3 py-2 rounded-xl border border-slate-700 bg-slate-950 text-slate-100 text-xs md:text-sm"
-//           value={name}
-//           onChange={(e) => setName(e.target.value)}
-//         />
-//       </div>
-
-//       <div className="space-y-2">
-//         <div className="flex items-center justify-between">
-//           <span className="text-slate-300">Edit members</span>
-//           <span className="text-[11px] text-slate-500">
-//             {selectedMembers.size} selected
-//           </span>
-//         </div>
-
-//         <div className="max-h-40 overflow-y-auto border border-slate-800 rounded-xl">
-//           <ul className="divide-y divide-slate-800 text-xs md:text-sm">
-//             {allUsers.map((u) => {
-//               const checked = selectedMembers.has(u.firebaseUid);
-//               return (
-//                 <li
-//                   key={u.firebaseUid}
-//                   className="flex items-center gap-3 px-3 py-2 hover:bg-slate-800/60"
-//                 >
-//                   <input
-//                     type="checkbox"
-//                     className="w-4 h-4"
-//                     checked={checked}
-//                     onChange={() => toggleMember(u.firebaseUid)}
-//                   />
-//                   <div className="flex-1 min-w-0">
-//                     <div className="flex items-center gap-2">
-//                       <span className="font-medium text-slate-100 truncate">
-//                         {u.name || u.email}
-//                       </span>
-//                       {u.role === "admin" && (
-//                         <span className="px-1.5 py-0.5 rounded-full bg-indigo-500/20 text-[10px] text-indigo-200 border border-indigo-500/50">
-//                           admin
-//                         </span>
-//                       )}
-//                     </div>
-//                     <div className="text-[11px] text-slate-400 truncate">
-//                       {u.email}
-//                     </div>
-//                   </div>
-//                 </li>
-//               );
-//             })}
-//           </ul>
-//         </div>
-//       </div>
-
-//       <button
-//         onClick={handleSave}
-//         disabled={saving}
-//         className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-slate-50 font-medium text-xs md:text-sm"
+//     <div
+//       onClick={onClose}
+//       className="fixed inset-0 bg-black/55 backdrop-blur-sm flex items-center justify-center z-[60] modal-fade-in"
+//     >
+//       <div
+//         onClick={(e) => e.stopPropagation()}
+//         className="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl w-full max-w-lg p-6 relative modal-scale-in"
 //       >
-//         {saving ? "Saving…" : "Save changes"}
-//       </button>
+//         <button
+//           onClick={onClose}
+//           className="absolute top-3 right-4 text-slate-400 hover:text-slate-200 text-lg"
+//         >
+//           ✕
+//         </button>
+
+//         <h2 className="text-lg font-semibold text-slate-100 mb-4">
+//           Edit team details
+//         </h2>
+
+//         <div className="space-y-3 text-xs md:text-sm">
+//           <div className="space-y-1">
+//             <label className="block text-slate-300">Team name</label>
+//             <input
+//               className="w-full px-3 py-2 rounded-xl border border-slate-700 bg-slate-950 text-slate-100 text-xs md:text-sm"
+//               value={name}
+//               onChange={(e) => setName(e.target.value)}
+//             />
+//           </div>
+
+//           <div className="space-y-2">
+//             <div className="flex items-center justify-between">
+//               <span className="text-slate-300">Edit members</span>
+//               <span className="text-[11px] text-slate-500">
+//                 {selectedMembers.size} selected
+//               </span>
+//             </div>
+
+//             <div className="max-h-48 overflow-y-auto border border-slate-800 rounded-xl">
+//               <ul className="divide-y divide-slate-800 text-xs md:text-sm">
+//                 {allUsers.map((u) => {
+//                   const checked = selectedMembers.has(u.firebaseUid);
+//                   return (
+//                     <li
+//                       key={u.firebaseUid}
+//                       className="flex items-center gap-3 px-3 py-2 hover:bg-slate-800/60"
+//                     >
+//                       <input
+//                         type="checkbox"
+//                         className="w-4 h-4"
+//                         checked={checked}
+//                         onChange={() => toggleMember(u.firebaseUid)}
+//                       />
+//                       <div className="flex-1 min-w-0">
+//                         <div className="flex items-center gap-2">
+//                           <span className="font-medium text-slate-100 truncate">
+//                             {u.name || u.email}
+//                           </span>
+//                           {u.role === "admin" && (
+//                             <span className="px-1.5 py-0.5 rounded-full bg-indigo-500/20 text-[10px] text-indigo-200 border border-indigo-500/50">
+//                               admin
+//                             </span>
+//                           )}
+//                         </div>
+//                         <div className="text-[11px] text-slate-400 truncate">
+//                           {u.email}
+//                         </div>
+//                       </div>
+//                     </li>
+//                   );
+//                 })}
+//               </ul>
+//             </div>
+//           </div>
+
+//           <div className="flex justify-end gap-2 pt-2">
+//             <button
+//               onClick={onClose}
+//               className="px-4 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-100 text-xs md:text-sm"
+//             >
+//               Cancel
+//             </button>
+//             <button
+//               onClick={handleSave}
+//               disabled={saving}
+//               className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-slate-50 font-medium text-xs md:text-sm"
+//             >
+//               {saving ? "Saving…" : "Save changes"}
+//             </button>
+//           </div>
+//         </div>
+//       </div>
 //     </div>
 //   );
 // }
 
-// frontend/src/pages/AdminPanel.jsx
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { api } from "../api";
@@ -583,16 +720,19 @@ export default function AdminPanel() {
   const [errorText, setErrorText] = useState("");
   const [successText, setSuccessText] = useState("");
 
-  const [activeTeamId, setActiveTeamId] = useState(null);
-  const [activeTeamDetails, setActiveTeamDetails] = useState(null);
+  const [activeTeam, setActiveTeam] = useState(null);
+  const [teamDetails, setTeamDetails] = useState(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
 
-  const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   const isAdmin = user?.role === "admin";
   const adminFirebaseUid = user?.uid;
 
-  // Fetch all users + all teams created by this admin
+  // ─────────────────────────────────────
+  // Fetch users & teams for this admin
+  // ─────────────────────────────────────
   useEffect(() => {
     const fetchData = async () => {
       if (!adminFirebaseUid || !isAdmin) {
@@ -625,44 +765,11 @@ export default function AdminPanel() {
     fetchData();
   }, [adminFirebaseUid, isAdmin]);
 
-  // Load team details (members + progress) and show modal
-  const loadTeamDetails = async (teamId) => {
-    if (!teamId) return;
-
-    setActiveTeamId(teamId);
-    setDetailsLoading(true);
-    setErrorText("");
-    setSuccessText("");
-    setIsTeamModalOpen(true);
-    setActiveTeamDetails(null); // reset while fresh data loads
-
-    try {
-      const res = await api.get("/teams/details", {
-        params: { teamId },
-      });
-      setActiveTeamDetails(res.data);
-    } catch (err) {
-      console.error("Team details error:", err);
-      setErrorText("Could not load team details.");
-    } finally {
-      setDetailsLoading(false);
-    }
-  };
-
-  const closeTeamModal = () => {
-    setIsTeamModalOpen(false);
-    setActiveTeamId(null);
-    setActiveTeamDetails(null);
-  };
-
   const toggleSelect = (firebaseUid) => {
     setSelected((prev) => {
       const copy = new Set(prev);
-      if (copy.has(firebaseUid)) {
-        copy.delete(firebaseUid);
-      } else {
-        copy.add(firebaseUid);
-      }
+      if (copy.has(firebaseUid)) copy.delete(firebaseUid);
+      else copy.add(firebaseUid);
       return copy;
     });
   };
@@ -707,6 +814,35 @@ export default function AdminPanel() {
     }
   };
 
+  // ─────────────────────────────────────
+  // Open team details modal
+  // ─────────────────────────────────────
+  const openTeamDetails = async (team) => {
+    setActiveTeam(team);
+    setTeamDetails(null);
+    setShowDetailsModal(true);
+    setDetailsLoading(true);
+
+    try {
+      const res = await api.get("/teams/details", {
+        params: { teamId: team._id },
+      });
+      setTeamDetails(res.data);
+    } catch (err) {
+      console.error("Team details error:", err);
+      setErrorText("Could not load team details.");
+    } finally {
+      setDetailsLoading(false);
+    }
+  };
+
+  const closeTeamModal = () => {
+    setShowDetailsModal(false);
+    setTeamDetails(null);
+    setActiveTeam(null);
+    setShowEditModal(false);
+  };
+
   if (!user) {
     return (
       <div className="text-sm text-slate-400">
@@ -726,341 +862,498 @@ export default function AdminPanel() {
     );
   }
 
-  return (
-    <div className="max-w-5xl mx-auto space-y-4">
-      <header>
-        <h1 className="text-xl md:text-2xl font-semibold text-slate-50">
-          Admin Panel
-        </h1>
-        <p className="text-xs md:text-sm text-slate-400 mt-1">
-          Manage users, teams and see an overview of activity.
-        </p>
-      </header>
+  // CSS for animations (self-contained)
+  const modalAnimations = `
+    @keyframes modalFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes modalSlideUp {
+      from { opacity: 0; transform: translateY(18px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes modalScaleIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .modal-fade-in {
+      animation: modalFadeIn 0.18s ease-out;
+    }
+    .modal-slide-up {
+      animation: modalSlideUp 0.2s ease-out;
+    }
+    .modal-scale-in {
+      animation: modalScaleIn 0.2s ease-out;
+    }
+  `;
 
-      {errorText && (
-        <div className="text-xs text-red-300 bg-red-900/30 border border-red-700/50 rounded-xl px-3 py-2">
-          {errorText}
-        </div>
-      )}
-      {successText && (
-        <div className="text-xs text-emerald-300 bg-emerald-900/20 border border-emerald-700/40 rounded-xl px-3 py-2">
-          {successText}
-        </div>
-      )}
-
-      {loading ? (
-        <div className="text-xs text-slate-400">Loading users and teams…</div>
-      ) : (
-        <>
-          {/* Create team from users */}
-          <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-3">
-            <h2 className="text-sm font-semibold text-slate-100 mb-2">
-              Create team from registered users
-            </h2>
-
-            <form
-              className="space-y-3 text-xs md:text-sm"
-              onSubmit={handleCreateTeam}
-            >
-              <div className="space-y-1">
-                <label className="block text-slate-300">Team name</label>
-                <input
-                  className="w-full px-3 py-2 rounded-xl border border-slate-700 bg-slate-950 text-slate-100 text-xs md:text-sm"
-                  placeholder="e.g. Final Year Project Squad"
-                  value={teamName}
-                  onChange={(e) => setTeamName(e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-300 text-xs md:text-sm">
-                    Select members
-                  </span>
-                  <span className="text-[11px] text-slate-500">
-                    {selected.size} selected
-                  </span>
-                </div>
-
-                <div className="max-h-60 overflow-y-auto border border-slate-800 rounded-xl">
-                  {users.length === 0 ? (
-                    <div className="p-3 text-xs text-slate-500">
-                      No users registered yet.
-                    </div>
-                  ) : (
-                    <ul className="divide-y divide-slate-800 text-xs md:text-sm">
-                      {users.map((u) => (
-                        <li
-                          key={u.firebaseUid}
-                          className="flex items-center gap-3 px-3 py-2 hover:bg-slate-800/60"
-                        >
-                          <input
-                            type="checkbox"
-                            className="w-4 h-4"
-                            checked={selected.has(u.firebaseUid)}
-                            onChange={() => toggleSelect(u.firebaseUid)}
-                            disabled={u.firebaseUid === adminFirebaseUid}
-                          />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium text-slate-100 truncate">
-                                {u.name || u.email}
-                              </span>
-                              {u.role === "admin" && (
-                                <span className="px-1.5 py-0.5 rounded-full bg-indigo-500/20 text-[10px] text-indigo-200 border border-indigo-500/50">
-                                  admin
-                                </span>
-                              )}
-                            </div>
-                            <div className="text-[11px] text-slate-400 truncate">
-                              {u.email}
-                            </div>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={creating}
-                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-slate-50 font-medium text-xs md:text-sm"
-              >
-                {creating ? "Creating team…" : "Create team"}
-              </button>
-            </form>
-          </section>
-
-          {/* Team list */}
-          <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-2">
-            <h2 className="text-sm font-semibold text-slate-100 mb-1">
-              Your teams
-            </h2>
-            {teams.length === 0 ? (
-              <div className="text-xs text-slate-500">
-                You haven&apos;t created any teams yet.
-              </div>
-            ) : (
-              <ul className="space-y-2 text-xs md:text-sm">
-                {teams.map((t) => (
-                  <li
-                    key={t._id}
-                    className={`border border-slate-800 rounded-xl px-3 py-2 flex items-center justify-between cursor-pointer hover:border-indigo-500/60 ${
-                      activeTeamId === t._id
-                        ? "border-indigo-500/80 bg-slate-900"
-                        : ""
-                    }`}
-                    onClick={() => loadTeamDetails(t._id)}
-                  >
-                    <div>
-                      <div className="font-medium text-slate-100">
-                        {t.name}
-                      </div>
-                      <div className="text-[11px] text-slate-500">
-                        Team ID: <span className="font-mono">{t._id}</span>
-                      </div>
-                    </div>
-                    <div className="text-[11px] text-slate-400">
-                      Created: {new Date(t.createdAt).toLocaleDateString()}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-        </>
-      )}
-
-      {/* Animated TEAM DETAILS MODAL */}
-      {isTeamModalOpen && (
-        <TeamDetailsModal
-          details={activeTeamDetails}
-          loading={detailsLoading}
-          onClose={closeTeamModal}
-          adminFirebaseUid={adminFirebaseUid}
-          allUsers={users}
-          onTeamUpdated={(updatedTeam) => {
-            setTeams((prev) =>
-              prev.map((t) => (t._id === updatedTeam._id ? updatedTeam : t))
-            );
-            loadTeamDetails(updatedTeam._id);
-            setSuccessText("Team updated successfully.");
-          }}
-          onError={(msg) => setErrorText(msg)}
-        />
-      )}
-    </div>
-  );
-}
-
-/**
- * Modal showing team details (progress + members + edit form)
- * with smooth open/close transitions.
- */
-function TeamDetailsModal({
-  details,
-  loading,
-  onClose,
-  adminFirebaseUid,
-  allUsers,
-  onTeamUpdated,
-  onError,
-}) {
-  const [visible, setVisible] = useState(false);
-
-  // Trigger enter animation
-  useEffect(() => {
-    const id = requestAnimationFrame(() => setVisible(true));
-    return () => cancelAnimationFrame(id);
-  }, []);
-
-  // Handle closing with exit animation
-  const handleClose = () => {
-    setVisible(false);
-    const timeout = setTimeout(() => {
-      onClose && onClose();
-    }, 200); // duration must match tailwind duration-200
-
-    return () => clearTimeout(timeout);
-  };
-
-  const team = details?.team;
-  const stats = details?.stats;
-  const members = details?.users || [];
+  const anyModalOpen = showDetailsModal || showEditModal;
 
   return (
-    <div
-      className={`
-        fixed inset-0 z-40 flex items-center justify-center 
-        bg-black/60 backdrop-blur-sm
-        transition-opacity duration-200
-        ${visible ? "opacity-100" : "opacity-0"}
-      `}
-      onClick={handleClose}
-    >
+    <>
+      <style>{modalAnimations}</style>
+
+      {/* Background content with smooth zoom + blur when modal open */}
       <div
-        className={`
-          bg-slate-950 border border-slate-800 rounded-2xl 
-          max-w-3xl w-full mx-4 p-4 md:p-6 shadow-2xl relative 
-          max-h-[90vh] overflow-y-auto
-          transform transition-all duration-200 ease-out
-          ${visible ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-4 scale-95"}
-        `}
-        onClick={(e) => e.stopPropagation()}
+        className="max-w-5xl mx-auto space-y-4"
+        style={{
+          transform: anyModalOpen ? "scale(0.98)" : "scale(1)",
+          filter: anyModalOpen ? "blur(1px)" : "none",
+          transition: "transform 180ms ease-out, filter 180ms ease-out",
+        }}
       >
-        {/* Close button */}
-        <button
-          onClick={handleClose}
-          className="absolute top-3 right-3 text-slate-400 hover:text-slate-100 text-lg"
-          aria-label="Close"
-        >
-          ✕
-        </button>
+        <header>
+          <h1 className="text-xl md:text-2xl font-semibold text-slate-50">
+            Admin Panel
+          </h1>
+          <p className="text-xs md:text-sm text-slate-400 mt-1">
+            Manage users, teams and see an overview of activity.
+          </p>
+        </header>
 
-        {loading || !team ? (
-          <div className="text-sm text-slate-400">Loading team details…</div>
+        {errorText && (
+          <div className="text-xs text-red-300 bg-red-900/30 border border-red-700/50 rounded-xl px-3 py-2">
+            {errorText}
+          </div>
+        )}
+        {successText && (
+          <div className="text-xs text-emerald-300 bg-emerald-900/20 border border-emerald-700/40 rounded-xl px-3 py-2">
+            {successText}
+          </div>
+        )}
+
+        {loading ? (
+          <div className="text-xs text-slate-400">
+            Loading users and teams…
+          </div>
         ) : (
           <>
-            {/* Header */}
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div>
-                <h2 className="text-lg font-semibold text-slate-50 flex items-center gap-2">
-                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-indigo-500/20 text-indigo-300 text-sm">
-                    👥
-                  </span>
-                  {team.name}
-                </h2>
-                <p className="text-[11px] text-slate-500 mt-1">
-                  Team ID: <span className="font-mono">{team._id}</span>
-                </p>
-              </div>
-            </div>
+            {/* Create team from users */}
+            <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-3">
+              <h2 className="text-sm font-semibold text-slate-100 mb-2">
+                Create team from registered users
+              </h2>
 
-            {/* Progress */}
-            <div className="space-y-1 mb-4">
-              <div className="flex items-center justify-between text-xs text-slate-300">
-                <span>Progress</span>
-                <span>
-                  {stats.completedTasks}/{stats.totalTasks} tasks done (
-                  {stats.progressPercent}%)
-                </span>
-              </div>
-              <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
-                <div
-                  className="h-2 bg-emerald-500"
-                  style={{ width: `${stats.progressPercent}%` }}
-                ></div>
-              </div>
-            </div>
+              <form
+                className="space-y-3 text-xs md:text-sm"
+                onSubmit={handleCreateTeam}
+              >
+                <div className="space-y-1">
+                  <label className="block text-slate-300">Team name</label>
+                  <input
+                    className="w-full px-3 py-2 rounded-xl border border-slate-700 bg-slate-950 text-slate-100 text-xs md:text-sm"
+                    placeholder="e.g. Final Year Project Squad"
+                    value={teamName}
+                    onChange={(e) => setTeamName(e.target.value)}
+                  />
+                </div>
 
-            {/* Members */}
-            <div className="space-y-2 mb-4">
-              <h3 className="text-xs font-semibold text-slate-200">
-                Members
-              </h3>
-              {members.length === 0 ? (
-                <div className="text-[11px] text-slate-500">
-                  No user records for this team.
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-300 text-xs md:text-sm">
+                      Select members
+                    </span>
+                    <span className="text-[11px] text-slate-500">
+                      {selected.size} selected
+                    </span>
+                  </div>
+
+                  <div className="max-h-60 overflow-y-auto border border-slate-800 rounded-xl">
+                    {users.length === 0 ? (
+                      <div className="p-3 text-xs text-slate-500">
+                        No users registered yet.
+                      </div>
+                    ) : (
+                      <ul className="divide-y divide-slate-800 text-xs md:text-sm">
+                        {users.map((u) => (
+                          <li
+                            key={u.firebaseUid}
+                            className="flex items-center gap-3 px-3 py-2 hover:bg-slate-800/60"
+                          >
+                            <input
+                              type="checkbox"
+                              className="w-4 h-4"
+                              checked={selected.has(u.firebaseUid)}
+                              onChange={() => toggleSelect(u.firebaseUid)}
+                              disabled={
+                                u.firebaseUid === adminFirebaseUid
+                              }
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium text-slate-100 truncate">
+                                  {u.name || u.email}
+                                </span>
+                                {u.role === "admin" && (
+                                  <span className="px-1.5 py-0.5 rounded-full bg-indigo-500/20 text-[10px] text-indigo-200 border border-indigo-500/50">
+                                    admin
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-[11px] text-slate-400 truncate">
+                                {u.email}
+                              </div>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={creating}
+                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-slate-50 font-medium text-xs md:text-sm"
+                >
+                  {creating ? "Creating team…" : "Create team"}
+                </button>
+              </form>
+            </section>
+
+            {/* Team list */}
+            <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-2">
+              <h2 className="text-sm font-semibold text-slate-100 mb-1">
+                Your teams
+              </h2>
+              {teams.length === 0 ? (
+                <div className="text-xs text-slate-500">
+                  You haven&apos;t created any teams yet.
                 </div>
               ) : (
-                <ul className="space-y-1 text-[11px] md:text-xs">
-                  {members.map((m) => (
+                <ul className="space-y-2 text-xs md:text-sm">
+                  {teams.map((t) => (
                     <li
-                      key={m.firebaseUid}
-                      className="flex items-center justify-between border border-slate-800 rounded-lg px-3 py-1.5"
+                      key={t._id}
+                      className="border border-slate-800 rounded-xl px-3 py-2 flex items-center justify-between cursor-pointer hover:border-indigo-500/60 hover:bg-slate-900 transition"
+                      onClick={() => openTeamDetails(t)}
                     >
-                      <div className="flex flex-col">
-                        <span className="text-slate-100">
-                          {m.name || m.email}
-                        </span>
-                        <span className="text-slate-500">{m.email}</span>
+                      <div>
+                        <div className="font-medium text-slate-100">
+                          {t.name}
+                        </div>
+                        <div className="text-[11px] text-slate-500">
+                          Team ID:{" "}
+                          <span className="font-mono">{t._id}</span>
+                        </div>
                       </div>
-                      <span className="px-2 py-0.5 rounded-full bg-slate-800 text-slate-200 text-[10px]">
-                        {m.role}
-                      </span>
+                      <div className="text-[11px] text-slate-400">
+                        Created:{" "}
+                        {t.createdAt
+                          ? new Date(t.createdAt).toLocaleDateString()
+                          : "-"}
+                      </div>
                     </li>
                   ))}
                 </ul>
               )}
-            </div>
-
-            {/* Edit form inside modal */}
-            <TeamEditForm
-              adminFirebaseUid={adminFirebaseUid}
-              allUsers={allUsers}
-              details={details}
-              onUpdated={onTeamUpdated}
-              onError={onError}
-            />
+            </section>
           </>
         )}
       </div>
-    </div>
+
+      {/* ─────────────────────────────────────
+          Team details popup (VIEW ONLY)
+          ───────────────────────────────────── */}
+      {showDetailsModal && (
+        <div
+          onClick={closeTeamModal}
+          className="fixed inset-0 bg-black/55 backdrop-blur-sm flex items-center justify-center z-50 modal-fade-in"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl w-full max-w-4xl p-6 relative modal-slide-up"
+          >
+            <button
+              onClick={closeTeamModal}
+              className="absolute top-3 right-4 text-slate-400 hover:text-slate-200 text-lg"
+            >
+              ✕
+            </button>
+
+            {detailsLoading || !teamDetails ? (
+              <div className="text-sm text-slate-400">
+                Loading team details…
+              </div>
+            ) : (
+              <>
+                {/* Header */}
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-4">
+                  <div>
+                    <h2 className="text-lg font-semibold text-slate-100">
+                      {teamDetails.team?.name || "Team"}
+                    </h2>
+                    <p className="text-xs text-slate-500">
+                      Team ID:{" "}
+                      <span className="font-mono">
+                        {teamDetails.team?._id}
+                      </span>
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowEditModal(true)}
+                    className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-slate-50 text-xs md:text-sm"
+                  >
+                    Edit Details
+                  </button>
+                </div>
+
+                {/* Progress */}
+                <div className="space-y-1 mb-4">
+                  <div className="flex items-center justify-between text-xs text-slate-300">
+                    <span>Progress</span>
+                    <span>
+                      {teamDetails.stats?.completedTasks || 0}/
+                      {teamDetails.stats?.totalTasks || 0} tasks done (
+                      {teamDetails.stats?.progressPercent || 0}%)
+                    </span>
+                  </div>
+                  <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
+                    <div
+                      className="h-2 bg-emerald-500"
+                      style={{
+                        width: `${
+                          teamDetails.stats?.progressPercent || 0
+                        }%`,
+                      }}
+                    ></div>
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  {/* Members list */}
+                  <div>
+                    <h3 className="text-xs font-semibold text-slate-200 mb-2">
+                      Members
+                    </h3>
+                    {teamDetails.users?.length === 0 ? (
+                      <div className="text-[11px] text-slate-500">
+                        No user records for this team.
+                      </div>
+                    ) : (
+                      <ul className="space-y-1 text-[11px] md:text-xs">
+                        {teamDetails.users.map((m) => (
+                          <li
+                            key={m.firebaseUid}
+                            className="flex items-center justify-between border border-slate-800 rounded-lg px-3 py-1.5"
+                          >
+                            <div className="flex flex-col">
+                              <span className="text-slate-100">
+                                {m.name || m.email}
+                              </span>
+                              <span className="text-slate-500">
+                                {m.email}
+                              </span>
+                            </div>
+                            <span className="px-2 py-0.5 rounded-full bg-slate-800 text-slate-200 text-[10px]">
+                              {m.role}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+
+                  {/* Team tasks with creator + completer */}
+                  <div>
+                    <h3 className="text-xs font-semibold text-slate-200 mb-2">
+                      Team tasks
+                    </h3>
+                    {(() => {
+                      const tasks = teamDetails.tasks || [];
+                      if (tasks.length === 0) {
+                        return (
+                          <div className="text-[11px] text-slate-500">
+                            No tasks found for this team.
+                          </div>
+                        );
+                      }
+
+                      const memberMap = new Map(
+                        (teamDetails.users || []).map((u) => [
+                          u.firebaseUid,
+                          u,
+                        ])
+                      );
+
+                      return (
+                        <ul className="space-y-1 text-[11px] md:text-xs">
+                          {tasks.map((t) => {
+                            const creatorUser =
+                              t.userFirebaseUid &&
+                              memberMap.get(t.userFirebaseUid);
+                            const completerUser =
+                              t.completedByFirebaseUid &&
+                              memberMap.get(t.completedByFirebaseUid);
+
+                            const createdBy =
+                              t.createdByName ||
+                              creatorUser?.name ||
+                              creatorUser?.email ||
+                              "Unknown";
+
+                            const completedBy =
+                              t.completedByName ||
+                              completerUser?.name ||
+                              completerUser?.email ||
+                              null;
+
+                            const createdOn = t.createdAt
+                              ? new Date(
+                                  t.createdAt
+                                ).toLocaleString()
+                              : null;
+
+                            const completedOn = t.completedAt
+                              ? new Date(
+                                  t.completedAt
+                                ).toLocaleString()
+                              : null;
+
+                            const due = t.dueDate
+                              ? new Date(
+                                  t.dueDate
+                                ).toLocaleDateString()
+                              : "No due date";
+
+                            return (
+                              <li
+                                key={t._id}
+                                className="border border-slate-800 rounded-lg px-3 py-2 flex flex-col gap-1"
+                              >
+                                <div className="flex items-start justify-between gap-2">
+                                  <div>
+                                    <div className="text-slate-100 font-medium">
+                                      {t.title}
+                                    </div>
+                                    {t.description && (
+                                      <div className="text-[11px] text-slate-400">
+                                        {t.description}
+                                      </div>
+                                    )}
+                                  </div>
+                                  <span
+                                    className={`text-[11px] px-2 py-0.5 rounded-full self-start ${
+                                      t.status === "done"
+                                        ? "bg-emerald-500/20 text-emerald-300"
+                                        : t.status === "in-progress"
+                                        ? "bg-amber-500/20 text-amber-300"
+                                        : "bg-slate-700/50 text-slate-300"
+                                    }`}
+                                  >
+                                    {t.status}
+                                  </span>
+                                </div>
+
+                                <div className="text-[11px] text-slate-400">
+                                  <div>
+                                    Created by{" "}
+                                    <span className="text-slate-200">
+                                      {createdBy}
+                                    </span>
+                                    {createdOn && (
+                                      <>
+                                        {" "}
+                                        on{" "}
+                                        <span className="text-slate-200">
+                                          {createdOn}
+                                        </span>
+                                      </>
+                                    )}
+                                  </div>
+                                  <div>
+                                    Due on{" "}
+                                    <span className="text-slate-200">
+                                      {due}
+                                    </span>
+                                  </div>
+
+                                  {t.status === "done" && (
+                                    <div className="mt-0.5">
+                                      {completedBy ? (
+                                        <>
+                                          Completed by{" "}
+                                          <span className="text-slate-200">
+                                            {completedBy}
+                                          </span>
+                                        </>
+                                      ) : (
+                                        "Completed"
+                                      )}
+                                      {completedOn && (
+                                        <>
+                                          {" "}
+                                          on{" "}
+                                          <span className="text-slate-200">
+                                            {completedOn}
+                                          </span>
+                                        </>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      );
+                    })()}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ─────────────────────────────────────
+          Edit Team popup (name + members)
+          ───────────────────────────────────── */}
+      {showEditModal && teamDetails && (
+        <TeamEditModal
+          details={teamDetails}
+          allUsers={users}
+          adminFirebaseUid={adminFirebaseUid}
+          onClose={() => setShowEditModal(false)}
+          onUpdated={async (updatedDetails) => {
+            // Update local team details object
+            setTeamDetails(updatedDetails);
+
+            // Update main teams list with new team name
+            setTeams((prev) =>
+              prev.map((t) =>
+                t._id === updatedDetails.team._id ? updatedDetails.team : t
+              )
+            );
+
+            setShowEditModal(false);
+            setSuccessText("Team updated successfully.");
+          }}
+        />
+      )}
+    </>
   );
 }
 
 /**
- * Small sub-component to edit team name + members.
+ * ✏️ Separate Edit Modal for team name + members
  */
-function TeamEditForm({
+function TeamEditModal({
   adminFirebaseUid,
   allUsers,
   details,
+  onClose,
   onUpdated,
-  onError,
 }) {
   const [name, setName] = useState(details.team.name);
   const [saving, setSaving] = useState(false);
   const [selectedMembers, setSelectedMembers] = useState(
-    new Set(details.team.memberFirebaseUids)
+    new Set(details.team.memberFirebaseUids || [])
   );
 
-  // keep state in sync when different team is selected
   useEffect(() => {
     setName(details.team.name);
-    setSelectedMembers(new Set(details.team.memberFirebaseUids));
+    setSelectedMembers(new Set(details.team.memberFirebaseUids || []));
   }, [details]);
 
   const toggleMember = (firebaseUid) => {
@@ -1075,89 +1368,119 @@ function TeamEditForm({
   const handleSave = async () => {
     try {
       setSaving(true);
-      onError && onError("");
 
-      const res = await api.put(`/teams/${details.team._id}`, {
+      // First update the team
+      await api.put(`/teams/${details.team._id}`, {
         adminFirebaseUid,
         name,
         memberFirebaseUids: Array.from(selectedMembers),
       });
 
-      onUpdated && onUpdated(res.data);
+      // Then re-fetch fresh details (team + users + stats + tasks)
+      const refreshed = await api.get("/teams/details", {
+        params: { teamId: details.team._id },
+      });
+
+      onUpdated && onUpdated(refreshed.data);
     } catch (err) {
       console.error("Update team error:", err);
-      onError &&
-        onError(
-          err?.response?.data?.message || "Failed to update team."
-        );
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <div className="space-y-3 text-xs md:text-sm mt-3">
-      <div className="space-y-1">
-        <label className="block text-slate-300">Edit team name</label>
-        <input
-          className="w-full px-3 py-2 rounded-xl border border-slate-700 bg-slate-950 text-slate-100 text-xs md:text-sm"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-      </div>
-
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <span className="text-slate-300">Edit members</span>
-          <span className="text-[11px] text-slate-500">
-            {selectedMembers.size} selected
-          </span>
-        </div>
-
-        <div className="max-h-40 overflow-y-auto border border-slate-800 rounded-xl">
-          <ul className="divide-y divide-slate-800 text-xs md:text-sm">
-            {allUsers.map((u) => {
-              const checked = selectedMembers.has(u.firebaseUid);
-              return (
-                <li
-                  key={u.firebaseUid}
-                  className="flex items-center gap-3 px-3 py-2 hover:bg-slate-800/60"
-                >
-                  <input
-                    type="checkbox"
-                    className="w-4 h-4"
-                    checked={checked}
-                    onChange={() => toggleMember(u.firebaseUid)}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-slate-100 truncate">
-                        {u.name || u.email}
-                      </span>
-                      {u.role === "admin" && (
-                        <span className="px-1.5 py-0.5 rounded-full bg-indigo-500/20 text-[10px] text-indigo-200 border border-indigo-500/50">
-                          admin
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-[11px] text-slate-400 truncate">
-                      {u.email}
-                    </div>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      </div>
-
-      <button
-        onClick={handleSave}
-        disabled={saving}
-        className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-slate-50 font-medium text-xs md:text-sm"
+    <div
+      onClick={onClose}
+      className="fixed inset-0 bg-black/55 backdrop-blur-sm flex items-center justify-center z-60 modal-fade-in"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl w-full max-w-lg p-6 relative modal-scale-in"
       >
-        {saving ? "Saving…" : "Save changes"}
-      </button>
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-4 text-slate-400 hover:text-slate-200 text-lg"
+        >
+          ✕
+        </button>
+
+        <h2 className="text-lg font-semibold text-slate-100 mb-4">
+          Edit team details
+        </h2>
+
+        <div className="space-y-3 text-xs md:text-sm">
+          <div className="space-y-1">
+            <label className="block text-slate-300">Team name</label>
+            <input
+              className="w-full px-3 py-2 rounded-xl border border-slate-700 bg-slate-950 text-slate-100 text-xs md:text-sm"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-slate-300">Edit members</span>
+              <span className="text-[11px] text-slate-500">
+                {selectedMembers.size} selected
+              </span>
+            </div>
+
+            <div className="max-h-48 overflow-y-auto border border-slate-800 rounded-xl">
+              <ul className="divide-y divide-slate-800 text-xs md:text-sm">
+                {allUsers.map((u) => {
+                  const checked = selectedMembers.has(u.firebaseUid);
+                  return (
+                    <li
+                      key={u.firebaseUid}
+                      className="flex items-center gap-3 px-3 py-2 hover:bg-slate-800/60"
+                    >
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4"
+                        checked={checked}
+                        onChange={() => toggleMember(u.firebaseUid)}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-slate-100 truncate">
+                            {u.name || u.email}
+                          </span>
+                          {u.role === "admin" && (
+                            <span className="px-1.5 py-0.5 rounded-full bg-indigo-500/20 text-[10px] text-indigo-200 border border-indigo-500/50">
+                              admin
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-[11px] text-slate-400 truncate">
+                          {u.email}
+                        </div>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-100 text-xs md:text-sm"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-slate-50 font-medium text-xs md:text-sm"
+            >
+              {saving ? "Saving…" : "Save changes"}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
