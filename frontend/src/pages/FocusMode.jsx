@@ -1,4 +1,5 @@
-// import { useEffect, useState } from "react";
+// // frontend/src/pages/FocusMode.jsx
+// import { useEffect, useState, useRef } from "react";
 // import { api } from "../api";
 // import { useAuth } from "../context/AuthContext.jsx";
 
@@ -6,7 +7,6 @@
 //   if (!dateStr) return false;
 //   const d = new Date(dateStr);
 //   const today = new Date();
-//   // zero out time
 //   d.setHours(0, 0, 0, 0);
 //   today.setHours(0, 0, 0, 0);
 //   return d <= today;
@@ -19,9 +19,9 @@
 //   const [tasks, setTasks] = useState([]);
 //   const [loading, setLoading] = useState(true);
 
-//   // timer state
-//   const [secondsLeft, setSecondsLeft] = useState(25 * 60); // 25 mins
+//   const [secondsLeft, setSecondsLeft] = useState(25 * 60); // 25 min
 //   const [isRunning, setIsRunning] = useState(false);
+//   const intervalRef = useRef(null);
 
 //   useEffect(() => {
 //     if (!userId) return;
@@ -40,10 +40,12 @@
 //     fetchTasks();
 //   }, [userId]);
 
-//   // filter today + overdue & not done
 //   const focusTasks = tasks.filter(
 //     (t) => t.status !== "done" && isTodayOrPast(t.dueDate)
 //   );
+
+//   const currentTask = focusTasks[0] || null;
+//   const remainingTasks = focusTasks.slice(1);
 
 //   const handleMarkDone = async (id) => {
 //     try {
@@ -54,32 +56,43 @@
 //     }
 //   };
 
-//   // timer effect
-//   useEffect(() => {
-//     if (!isRunning) return;
-//     if (secondsLeft <= 0) {
-//       setIsRunning(false);
-//       return;
-//     }
-//     const id = setInterval(() => {
-//       setSecondsLeft((s) => s - 1);
+//   const startTimer = () => {
+//     if (intervalRef.current) return;
+//     setIsRunning(true);
+//     intervalRef.current = setInterval(() => {
+//       setSecondsLeft((prev) => {
+//         if (prev <= 1) {
+//           clearInterval(intervalRef.current);
+//           intervalRef.current = null;
+//           setIsRunning(false);
+//           return 0;
+//         }
+//         return prev - 1;
+//       });
 //     }, 1000);
-//     return () => clearInterval(id);
-//   }, [isRunning, secondsLeft]);
+//   };
+
+//   const pauseTimer = () => {
+//     setIsRunning(false);
+//     if (intervalRef.current) {
+//       clearInterval(intervalRef.current);
+//       intervalRef.current = null;
+//     }
+//   };
+
+//   const resetTimer = () => {
+//     pauseTimer();
+//     setSecondsLeft(25 * 60);
+//   };
+
+//   useEffect(() => {
+//     return () => {
+//       if (intervalRef.current) clearInterval(intervalRef.current);
+//     };
+//   }, []);
 
 //   const minutes = String(Math.floor(secondsLeft / 60)).padStart(2, "0");
 //   const seconds = String(secondsLeft % 60).padStart(2, "0");
-
-//   const handleStart = () => {
-//     setIsRunning(true);
-//   };
-//   const handlePause = () => {
-//     setIsRunning(false);
-//   };
-//   const handleReset = () => {
-//     setIsRunning(false);
-//     setSecondsLeft(25 * 60);
-//   };
 
 //   return (
 //     <div className="max-w-4xl mx-auto space-y-4">
@@ -98,8 +111,48 @@
 //         </div>
 //       </header>
 
+//       {/* Current focus task */}
+//       {currentTask && (
+//         <section className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+//           <div>
+//             <div className="text-[11px] uppercase tracking-wide text-emerald-300 mb-1">
+//               Current focus
+//             </div>
+//             <h2 className="text-sm md:text-base font-semibold text-slate-50">
+//               {currentTask.title}
+//             </h2>
+//             {currentTask.description && (
+//               <p className="mt-1 text-[11px] md:text-xs text-slate-400">
+//                 {currentTask.description}
+//               </p>
+//             )}
+//             <p className="mt-1 text-[11px] text-slate-500">
+//               {currentTask.dueDate
+//                 ? `Due: ${new Date(
+//                     currentTask.dueDate
+//                   ).toLocaleDateString()}`
+//                 : "No due date"}
+//             </p>
+//           </div>
+//           <div className="flex gap-2 text-xs">
+//             <button
+//               onClick={startTimer}
+//               className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-medium"
+//             >
+//               ▶ Start session
+//             </button>
+//             <button
+//               onClick={() => handleMarkDone(currentTask._id)}
+//               className="px-3 py-1.5 rounded-xl bg-emerald-600/80 hover:bg-emerald-500 font-medium"
+//             >
+//               ✓ Mark done
+//             </button>
+//           </div>
+//         </section>
+//       )}
+
 //       <div className="grid md:grid-cols-[2fr,1fr] gap-4">
-//         {/* Left: focus tasks */}
+//         {/* Left: other focus tasks */}
 //         <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-3">
 //           <h2 className="text-sm font-semibold text-slate-100 mb-1">
 //             Today&apos;s & overdue tasks
@@ -113,7 +166,12 @@
 //             </div>
 //           ) : (
 //             <div className="space-y-2 text-xs">
-//               {focusTasks.map((task) => (
+//               {remainingTasks.length === 0 && (
+//                 <div className="text-[11px] text-slate-500">
+//                   No more tasks after the current one.
+//                 </div>
+//               )}
+//               {remainingTasks.map((task) => (
 //                 <div
 //                   key={task._id}
 //                   className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 flex items-start justify-between gap-3"
@@ -142,7 +200,7 @@
 //           )}
 //         </div>
 
-//         {/* Right: timer widget */}
+//         {/* Right: timer */}
 //         <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center">
 //           <div className="text-xs uppercase tracking-wide text-slate-400 mb-2">
 //             Focus Session
@@ -155,19 +213,19 @@
 //           </p>
 //           <div className="mt-4 flex gap-2">
 //             <button
-//               onClick={handleStart}
+//               onClick={startTimer}
 //               className="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-xs font-medium"
 //             >
 //               ▶ {isRunning ? "Running" : "Start"}
 //             </button>
 //             <button
-//               onClick={handlePause}
+//               onClick={pauseTimer}
 //               className="px-4 py-1.5 rounded-xl border border-slate-700 text-xs text-slate-300 hover:border-slate-500"
 //             >
 //               ⏸ Pause
 //             </button>
 //             <button
-//               onClick={handleReset}
+//               onClick={resetTimer}
 //               className="px-4 py-1.5 rounded-xl border border-slate-700 text-xs text-slate-300 hover:border-slate-500"
 //             >
 //               ⟲ Reset
@@ -179,7 +237,6 @@
 //   );
 // }
 
-// frontend/src/pages/FocusMode.jsx
 import { useEffect, useState, useRef } from "react";
 import { api } from "../api";
 import { useAuth } from "../context/AuthContext.jsx";

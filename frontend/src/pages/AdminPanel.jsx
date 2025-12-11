@@ -1,3 +1,4 @@
+// //frontend/src/pages/AdminPanel.jsx
 // import { useEffect, useState } from "react";
 // import { useAuth } from "../context/AuthContext.jsx";
 // import { api } from "../api";
@@ -148,7 +149,7 @@
 //     return (
 //       <div className="text-sm text-slate-400">
 //         You are logged in as{" "}
-//         <span className="font-semibold">{user.email}</span> with role{" "}
+//           <span className="font-semibold">{user.email}</span> with role{" "}
 //         <span className="font-semibold">{user.role || "member"}</span>. Only
 //         admins can access this panel.
 //       </div>
@@ -270,7 +271,7 @@
 //                               onChange={() => toggleSelect(u.firebaseUid)}
 //                               disabled={
 //                                 u.firebaseUid === adminFirebaseUid
-//                               } // admin can be added automatically via backend if desired
+//                               }
 //                             />
 //                             <div className="flex-1 min-w-0">
 //                               <div className="flex items-center gap-2">
@@ -447,7 +448,7 @@
 //                     )}
 //                   </div>
 
-//                   {/* Tasks list */}
+//                   {/* Team tasks with creator + completer */}
 //                   <div>
 //                     <h3 className="text-xs font-semibold text-slate-200 mb-2">
 //                       Team tasks
@@ -462,7 +463,6 @@
 //                         );
 //                       }
 
-//                       // Optional helper to map creator by firebaseUid if backend doesn't send createdByName
 //                       const memberMap = new Map(
 //                         (teamDetails.users || []).map((u) => [
 //                           u.firebaseUid,
@@ -473,14 +473,36 @@
 //                       return (
 //                         <ul className="space-y-1 text-[11px] md:text-xs">
 //                           {tasks.map((t) => {
-//                             const creatorFromUid =
+//                             const creatorUser =
 //                               t.userFirebaseUid &&
 //                               memberMap.get(t.userFirebaseUid);
-//                             const creatorName =
+//                             const completerUser =
+//                               t.completedByFirebaseUid &&
+//                               memberMap.get(t.completedByFirebaseUid);
+
+//                             const createdBy =
 //                               t.createdByName ||
-//                               creatorFromUid?.name ||
-//                               creatorFromUid?.email ||
+//                               creatorUser?.name ||
+//                               creatorUser?.email ||
 //                               "Unknown";
+
+//                             const completedBy =
+//                               t.completedByName ||
+//                               completerUser?.name ||
+//                               completerUser?.email ||
+//                               null;
+
+//                             const createdOn = t.createdAt
+//                               ? new Date(
+//                                   t.createdAt
+//                                 ).toLocaleString()
+//                               : null;
+
+//                             const completedOn = t.completedAt
+//                               ? new Date(
+//                                   t.completedAt
+//                                 ).toLocaleString()
+//                               : null;
 
 //                             const due = t.dueDate
 //                               ? new Date(
@@ -491,27 +513,79 @@
 //                             return (
 //                               <li
 //                                 key={t._id}
-//                                 className="border border-slate-800 rounded-lg px-3 py-1.5 flex items-start justify-between gap-2"
+//                                 className="border border-slate-800 rounded-lg px-3 py-2 flex flex-col gap-1"
 //                               >
-//                                 <div>
-//                                   <div className="text-slate-100 font-medium">
-//                                     {t.title}
+//                                 <div className="flex items-start justify-between gap-2">
+//                                   <div>
+//                                     <div className="text-slate-100 font-medium">
+//                                       {t.title}
+//                                     </div>
+//                                     {t.description && (
+//                                       <div className="text-[11px] text-slate-400">
+//                                         {t.description}
+//                                       </div>
+//                                     )}
 //                                   </div>
-//                                   <div className="text-[11px] text-slate-400">
-//                                     by {creatorName} — due {due}
-//                                   </div>
+//                                   <span
+//                                     className={`text-[11px] px-2 py-0.5 rounded-full self-start ${
+//                                       t.status === "done"
+//                                         ? "bg-emerald-500/20 text-emerald-300"
+//                                         : t.status === "in-progress"
+//                                         ? "bg-amber-500/20 text-amber-300"
+//                                         : "bg-slate-700/50 text-slate-300"
+//                                     }`}
+//                                   >
+//                                     {t.status}
+//                                   </span>
 //                                 </div>
-//                                 <span
-//                                   className={`text-[11px] px-2 py-0.5 rounded-full self-center ${
-//                                     t.status === "done"
-//                                       ? "bg-emerald-500/20 text-emerald-300"
-//                                       : t.status === "in-progress"
-//                                       ? "bg-amber-500/20 text-amber-300"
-//                                       : "bg-slate-700/50 text-slate-300"
-//                                   }`}
-//                                 >
-//                                   {t.status}
-//                                 </span>
+
+//                                 <div className="text-[11px] text-slate-400">
+//                                   <div>
+//                                     Created by{" "}
+//                                     <span className="text-slate-200">
+//                                       {createdBy}
+//                                     </span>
+//                                     {createdOn && (
+//                                       <>
+//                                         {" "}
+//                                         on{" "}
+//                                         <span className="text-slate-200">
+//                                           {createdOn}
+//                                         </span>
+//                                       </>
+//                                     )}
+//                                   </div>
+//                                   <div>
+//                                     Due on{" "}
+//                                     <span className="text-slate-200">
+//                                       {due}
+//                                     </span>
+//                                   </div>
+
+//                                   {t.status === "done" && (
+//                                     <div className="mt-0.5">
+//                                       {completedBy ? (
+//                                         <>
+//                                           Completed by{" "}
+//                                           <span className="text-slate-200">
+//                                             {completedBy}
+//                                           </span>
+//                                         </>
+//                                       ) : (
+//                                         "Completed"
+//                                       )}
+//                                       {completedOn && (
+//                                         <>
+//                                           {" "}
+//                                           on{" "}
+//                                           <span className="text-slate-200">
+//                                             {completedOn}
+//                                           </span>
+//                                         </>
+//                                       )}
+//                                     </div>
+//                                   )}
+//                                 </div>
 //                               </li>
 //                             );
 //                           })}
@@ -612,7 +686,7 @@
 //   return (
 //     <div
 //       onClick={onClose}
-//       className="fixed inset-0 bg-black/55 backdrop-blur-sm flex items-center justify-center z-[60] modal-fade-in"
+//       className="fixed inset-0 bg-black/55 backdrop-blur-sm flex items-center justify-center z-60 modal-fade-in"
 //     >
 //       <div
 //         onClick={(e) => e.stopPropagation()}
@@ -704,7 +778,7 @@
 //     </div>
 //   );
 // }
-
+// frontend/src/pages/AdminPanel.jsx
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { api } from "../api";
@@ -731,7 +805,7 @@ export default function AdminPanel() {
   const adminFirebaseUid = user?.uid;
 
   // ─────────────────────────────────────
-  // Fetch users & teams for this admin
+  // Fetch users & ALL teams (for any admin)
   // ─────────────────────────────────────
   useEffect(() => {
     const fetchData = async () => {
@@ -747,9 +821,8 @@ export default function AdminPanel() {
       try {
         const [usersRes, teamsRes] = await Promise.all([
           api.get("/users"),
-          api.get("/teams/byAdmin", {
-            params: { adminFirebaseUid },
-          }),
+          // ✅ all teams, not only ones created by this admin
+          api.get("/teams/adminList"),
         ]);
 
         setUsers(usersRes.data || []);
@@ -800,6 +873,7 @@ export default function AdminPanel() {
         memberFirebaseUids,
       });
 
+      // push newly created team into the ALL teams list
       setTeams((prev) => [res.data, ...prev]);
       setTeamName("");
       setSelected(new Set());
@@ -855,7 +929,7 @@ export default function AdminPanel() {
     return (
       <div className="text-sm text-slate-400">
         You are logged in as{" "}
-          <span className="font-semibold">{user.email}</span> with role{" "}
+        <span className="font-semibold">{user.email}</span> with role{" "}
         <span className="font-semibold">{user.role || "member"}</span>. Only
         admins can access this panel.
       </div>
@@ -888,6 +962,10 @@ export default function AdminPanel() {
   `;
 
   const anyModalOpen = showDetailsModal || showEditModal;
+
+  // Helper: whether current admin can edit the active team
+  const canEditActiveTeam =
+    teamDetails?.team?.adminFirebaseUid === adminFirebaseUid;
 
   return (
     <>
@@ -975,9 +1053,7 @@ export default function AdminPanel() {
                               className="w-4 h-4"
                               checked={selected.has(u.firebaseUid)}
                               onChange={() => toggleSelect(u.firebaseUid)}
-                              disabled={
-                                u.firebaseUid === adminFirebaseUid
-                              }
+                              disabled={u.firebaseUid === adminFirebaseUid}
                             />
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2">
@@ -1011,14 +1087,14 @@ export default function AdminPanel() {
               </form>
             </section>
 
-            {/* Team list */}
+            {/* Team list – all teams visible to every admin */}
             <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-2">
               <h2 className="text-sm font-semibold text-slate-100 mb-1">
-                Your teams
+                All teams
               </h2>
               {teams.length === 0 ? (
                 <div className="text-xs text-slate-500">
-                  You haven&apos;t created any teams yet.
+                  No teams have been created yet.
                 </div>
               ) : (
                 <ul className="space-y-2 text-xs md:text-sm">
@@ -1029,19 +1105,26 @@ export default function AdminPanel() {
                       onClick={() => openTeamDetails(t)}
                     >
                       <div>
-                        <div className="font-medium text-slate-100">
+                        <div className="font-medium text-slate-100 flex items-center gap-2">
                           {t.name}
+                          {t.adminFirebaseUid === adminFirebaseUid && (
+                            <span className="px-1.5 py-0.5 rounded-full bg-indigo-500/20 text-[10px] text-indigo-200 border border-indigo-500/50">
+                              you are admin
+                            </span>
+                          )}
                         </div>
                         <div className="text-[11px] text-slate-500">
                           Team ID:{" "}
                           <span className="font-mono">{t._id}</span>
                         </div>
                       </div>
-                      <div className="text-[11px] text-slate-400">
-                        Created:{" "}
-                        {t.createdAt
-                          ? new Date(t.createdAt).toLocaleDateString()
-                          : "-"}
+                      <div className="text-[11px] text-slate-400 text-right">
+                        <div>
+                          Created:{" "}
+                          {t.createdAt
+                            ? new Date(t.createdAt).toLocaleDateString()
+                            : "-"}
+                        </div>
                       </div>
                     </li>
                   ))}
@@ -1062,23 +1145,16 @@ export default function AdminPanel() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl w-full max-w-4xl p-6 relative modal-slide-up"
+            className="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl w-full max-w-4xl p-6 modal-slide-up"
           >
-            <button
-              onClick={closeTeamModal}
-              className="absolute top-3 right-4 text-slate-400 hover:text-slate-200 text-lg"
-            >
-              ✕
-            </button>
-
             {detailsLoading || !teamDetails ? (
               <div className="text-sm text-slate-400">
                 Loading team details…
               </div>
             ) : (
               <>
-                {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-4">
+                {/* Header – Edit + Close on right, no overlap */}
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
                   <div>
                     <h2 className="text-lg font-semibold text-slate-100">
                       {teamDetails.team?.name || "Team"}
@@ -1090,12 +1166,24 @@ export default function AdminPanel() {
                       </span>
                     </p>
                   </div>
-                  <button
-                    onClick={() => setShowEditModal(true)}
-                    className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-slate-50 text-xs md:text-sm"
-                  >
-                    Edit Details
-                  </button>
+
+                  <div className="flex items-center gap-2">
+                    {canEditActiveTeam && (
+                      <button
+                        onClick={() => setShowEditModal(true)}
+                        className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-slate-50 text-xs md:text-sm"
+                      >
+                        Edit details
+                      </button>
+                    )}
+                    <button
+                      onClick={closeTeamModal}
+                      className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm"
+                      aria-label="Close"
+                    >
+                      ✕
+                    </button>
+                  </div>
                 </div>
 
                 {/* Progress */}
@@ -1180,8 +1268,8 @@ export default function AdminPanel() {
                         <ul className="space-y-1 text-[11px] md:text-xs">
                           {tasks.map((t) => {
                             const creatorUser =
-                              t.userFirebaseUid &&
-                              memberMap.get(t.userFirebaseUid);
+                              t.createdByFirebaseUid &&
+                              memberMap.get(t.createdByFirebaseUid);
                             const completerUser =
                               t.completedByFirebaseUid &&
                               memberMap.get(t.completedByFirebaseUid);
@@ -1309,7 +1397,7 @@ export default function AdminPanel() {
       {/* ─────────────────────────────────────
           Edit Team popup (name + members)
           ───────────────────────────────────── */}
-      {showEditModal && teamDetails && (
+      {showEditModal && teamDetails && canEditActiveTeam && (
         <TeamEditModal
           details={teamDetails}
           allUsers={users}
@@ -1319,7 +1407,7 @@ export default function AdminPanel() {
             // Update local team details object
             setTeamDetails(updatedDetails);
 
-            // Update main teams list with new team name
+            // Update main teams list with new team data
             setTeams((prev) =>
               prev.map((t) =>
                 t._id === updatedDetails.team._id ? updatedDetails.team : t
@@ -1396,18 +1484,20 @@ function TeamEditModal({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl w-full max-w-lg p-6 relative modal-scale-in"
+        className="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl w-full max-w-lg p-6 modal-scale-in"
       >
-        <button
-          onClick={onClose}
-          className="absolute top-3 right-4 text-slate-400 hover:text-slate-200 text-lg"
-        >
-          ✕
-        </button>
-
-        <h2 className="text-lg font-semibold text-slate-100 mb-4">
-          Edit team details
-        </h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-semibold text-slate-100">
+            Edit team details
+          </h2>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm"
+            aria-label="Close"
+          >
+            ✕
+          </button>
+        </div>
 
         <div className="space-y-3 text-xs md:text-sm">
           <div className="space-y-1">
