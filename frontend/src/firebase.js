@@ -12,18 +12,6 @@ const firebaseConfig = {
   appId: "1:521914592880:web:f74a5bed830308f498ceb5",
   measurementId: "G-FX9YLZECSZ"
 };
-
-// const app = initializeApp(firebaseConfig);
-// export const auth = getAuth(app);
-// setPersistence(auth, browserLocalPersistence);
-
-// export const provider = new GoogleAuthProvider();
-
-// export const signInWithGoogle = () => signInWithPopup(auth, provider);
-// export const logout = () => signOut(auth);
-
-// export default app;
-
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
