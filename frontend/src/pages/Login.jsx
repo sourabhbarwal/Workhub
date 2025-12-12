@@ -123,31 +123,31 @@ export default function Login() {
   const isLogin = mode === "login";
 
   return (
-    <div className="min-h-screen w-screen flex items-center justify-center bg-slate-950">
+    <div className="min-h-screen w-screen flex items-center justify-center bg-gray-50">
       <div className="w-full max-w-md mx-4">
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl p-6 md:p-8">
+        <div className="bg-white border border-gray-200 rounded-2xl shadow-xl p-6 md:p-8">
           {/* Logo + title */}
           <div className="flex items-center justify-center gap-2 mb-6">
-            <span className="flex items-center justify-center w-9 h-9 rounded-full bg-indigo-500/20 border border-indigo-400/60 text-lg">
+            <span className="flex items-center justify-center w-9 h-9 rounded-full bg-gray-500/20 border border-gray-400/60 text-lg">
               <link rel="icon" type="image/png" href="ft.png" />
             </span>
             <div className="text-center">
-              <h1 className="text-xl md:text-2xl font-semibold text-slate-50">
-                Focus<span className="text-indigo-400">Track</span>
+              <h1 className="text-xl md:text-2xl font-semibold text-gray-900">
+                Focus<span className="text-gray-500">Track</span>
               </h1>
-              <p className="text-[11px] md:text-xs text-slate-400 mt-1">
+              <p className="text-[11px] md:text-xs text-gray-700 mt-1">
                 Plan tasks, focus deeply, and track your progress.
               </p>
             </div>
           </div>
 
           {/* Toggle buttons */}
-          <div className="flex mb-4 text-xs bg-slate-800/60 rounded-xl p-1">
+          <div className="flex mb-4 text-xs bg-gray-200/60 rounded-xl p-1">
             <button
               className={`flex-1 py-1.5 rounded-lg ${
                 isLogin
-                  ? "bg-slate-900 text-slate-50"
-                  : "text-slate-400 hover:text-slate-100"
+                  ? "bg-white text-gray-200"
+                  : "text-gray-200 hover:text-gray-200"
               }`}
               onClick={() => {
                 setMode("login");
@@ -159,8 +159,8 @@ export default function Login() {
             <button
               className={`flex-1 py-1.5 rounded-lg ${
                 !isLogin
-                  ? "bg-slate-900 text-slate-50"
-                  : "text-slate-400 hover:text-slate-100"
+                  ? "bg-white text-gray-200"
+                  : "text-gray-200 hover:text-gray-200"
               }`}
               onClick={() => {
                 setMode("signup");
@@ -184,11 +184,11 @@ export default function Login() {
             onSubmit={isLogin ? handleEmailLogin : handleEmailSignup}
           >
             <div className="space-y-1">
-              <label className="block text-slate-300">Email</label>
+              <label className="block text-gray-900">Email</label>
               <input
                 type="email"
                 required
-                className="w-full px-3 py-2 rounded-xl border border-slate-700 bg-slate-950 text-slate-100 text-xs md:text-sm"
+                className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-gray-100 text-gray-700 text-xs md:text-sm"
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -197,13 +197,13 @@ export default function Login() {
             </div>
 
             <div className="space-y-1">
-              <label className="block text-slate-300">Password</label>
+              <label className="block text-gray-900">Password</label>
               <input
                 type="password"
                 required
                 minLength={6}
-                className="w-full px-3 py-2 rounded-xl border border-slate-700 bg-slate-950 text-slate-100 text-xs md:text-sm"
-                placeholder="••••••••"
+                className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-gray-100 text-gray-700 text-xs md:text-sm"
+                placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete={isLogin ? "current-password" : "new-password"}
@@ -213,18 +213,18 @@ export default function Login() {
             {/* Role selection only in Sign Up mode */}
             {!isLogin && (
               <div className="space-y-1">
-                <label className="block text-slate-300">
+                <label className="block text-gray-900">
                   Select your role
                 </label>
                 <select
-                  className="w-full px-3 py-2 rounded-xl border border-slate-700 bg-slate-950 text-slate-100 text-xs md:text-sm"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-gray-100 text-gray-500 text-xs md:text-sm"
                   value={role}
                   onChange={(e) => setRole(e.target.value)}
                 >
-                  <option value="admin">Admin (manage team & tasks)</option>
-                  <option value="member">Team member (work on tasks)</option>
+                    <option value="admin">Admin (manage team & tasks)</option>
+                    <option value="member">Team member (work on tasks)</option>
                 </select>
-                <p className="text-[10px] text-slate-500">
+                <p className="text-[11px] text-gray-900">
                   This is stored in the database and remembered for next logins.
                 </p>
               </div>
@@ -233,7 +233,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-2 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-slate-50 font-medium text-xs md:text-sm"
+              className="w-full mt-2 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-gray-200 font-medium text-xs md:text-sm"
             >
               {loading
                 ? "Please wait..."
@@ -245,22 +245,22 @@ export default function Login() {
 
           {/* Divider */}
           <div className="flex items-center gap-3 my-4">
-            <div className="h-px flex-1 bg-slate-800" />
-            <span className="text-[10px] text-slate-500">OR</span>
-            <div className="h-px flex-1 bg-slate-800" />
+            <div className="h-px flex-1 bg-gray-900" />
+            <span className="text-[10px] text-gray-900">OR</span>
+            <div className="h-px flex-1 bg-gray-900" />
           </div>
 
           {/* Google button */}
           <button
             onClick={handleGoogleAuth}
             disabled={loading}
-            className="w-full py-2 rounded-xl border border-slate-700 bg-slate-950 hover:border-slate-500 flex items-center justify-center gap-2 text-xs md:text-sm text-slate-100"
+            className="w-full py-2 rounded-xl border border-gray-200 bg-gray-100 hover:border-gray-500 flex items-center justify-center gap-2 text-xs md:text-sm text-gray-200"
           >
             <span>🔐</span>
             <span>Continue with Google</span>
           </button>
 
-          <p className="mt-4 text-[10px] text-center text-slate-500">
+          <p className="mt-4 text-[10px] text-center text-gray-900">
             New Google users will be asked to choose a role the first time and
             will stay logged in next time.
           </p>

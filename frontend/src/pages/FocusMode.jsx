@@ -98,35 +98,35 @@ export default function FocusMode() {
     <div className="max-w-4xl mx-auto space-y-4">
       <header className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl md:text-2xl font-semibold text-slate-50">
+          <h1 className="text-xl md:text-2xl font-semibold text-gray200">
             Focus Mode
           </h1>
-          <p className="text-xs md:text-sm text-slate-400 mt-1">
+          <p className="text-xs md:text-sm text-gray-400 mt-1">
             See only what matters today. One session at a time.
           </p>
         </div>
-        <div className="text-xs md:text-sm text-slate-400">
+        <div className="text-xs md:text-sm text-gray-400">
           Suggested session:{" "}
-          <span className="text-slate-100 font-medium">25 minutes</span>
+          <span className="text-gray-400 font-medium">25 minutes</span>
         </div>
       </header>
 
       {/* Current focus task */}
       {currentTask && (
-        <section className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <section className="bg-white border border-gray-200 rounded-2xl p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <div>
-            <div className="text-[11px] uppercase tracking-wide text-emerald-300 mb-1">
+            <div className="text-[11px] uppercase tracking-wide text-emerald-500 mb-1">
               Current focus
             </div>
-            <h2 className="text-sm md:text-base font-semibold text-slate-50">
+            <h2 className="text-sm md:text-base font-semibold text-gray-700">
               {currentTask.title}
             </h2>
             {currentTask.description && (
-              <p className="mt-1 text-[11px] md:text-xs text-slate-400">
+              <p className="mt-1 text-[11px] md:text-xs text-gray-500">
                 {currentTask.description}
               </p>
             )}
-            <p className="mt-1 text-[11px] text-slate-500">
+            <p className="mt-1 text-[11px] text-gray-900">
               {currentTask.dueDate
                 ? `Due: ${new Date(
                     currentTask.dueDate
@@ -153,34 +153,34 @@ export default function FocusMode() {
 
       <div className="grid md:grid-cols-[2fr,1fr] gap-4">
         {/* Left: other focus tasks */}
-        <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-3">
-          <h2 className="text-sm font-semibold text-slate-100 mb-1">
+        <div className="bg-white border border-gray-200 rounded-2xl p-4 space-y-3">
+          <h2 className="text-sm font-semibold text-gray-900 mb-1">
             Today&apos;s & overdue tasks
           </h2>
 
           {loading ? (
-            <div className="text-xs text-slate-400">Loading tasks…</div>
+            <div className="text-xs text-gray-500">Loading tasks…</div>
           ) : focusTasks.length === 0 ? (
-            <div className="text-xs text-slate-500">
+            <div className="text-xs text-gray-900">
               No due or overdue tasks. You can plan new ones from the dashboard.
             </div>
           ) : (
             <div className="space-y-2 text-xs">
               {remainingTasks.length === 0 && (
-                <div className="text-[11px] text-slate-500">
+                <div className="text-[11px] text-gray-900">
                   No more tasks after the current one.
                 </div>
               )}
               {remainingTasks.map((task) => (
                 <div
                   key={task._id}
-                  className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 flex items-start justify-between gap-3"
+                  className="bg-white border border-gray-200 rounded-xl px-3 py-2.5 flex items-start justify-between gap-3"
                 >
                   <div>
-                    <div className="font-medium text-slate-100">
+                    <div className="font-medium text-gray-900">
                       {task.title}
                     </div>
-                    <div className="mt-1 text-[11px] text-slate-500">
+                    <div className="mt-1 text-[11px] text-gray-9000">
                       {task.dueDate
                         ? `Due: ${new Date(
                             task.dueDate
@@ -190,7 +190,7 @@ export default function FocusMode() {
                   </div>
                   <button
                     onClick={() => handleMarkDone(task._id)}
-                    className="text-[11px] px-2 py-1 rounded-lg bg-emerald-600/80 hover:bg-emerald-500 text-slate-50"
+                    className="text-[11px] px-2 py-1 rounded-lg bg-emerald-600/80 hover:bg-emerald-500 text-gray-900"
                   >
                     Mark done
                   </button>
@@ -201,14 +201,14 @@ export default function FocusMode() {
         </div>
 
         {/* Right: timer */}
-        <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center">
-          <div className="text-xs uppercase tracking-wide text-slate-400 mb-2">
+        <div className="bg-white border border-gray-200 rounded-2xl p-4 flex flex-col items-center justify-center">
+          <div className="text-xs uppercase tracking-wide text-gray-500 mb-2">
             Focus Session
           </div>
-          <div className="text-4xl md:text-5xl font-semibold text-slate-50">
+          <div className="text-4xl md:text-5xl font-semibold text-gray-600">
             {minutes}:{seconds}
           </div>
-          <p className="mt-2 text-[11px] text-slate-400 text-center">
+          <p className="mt-2 text-[12px] text-gray-600 text-center">
             Start a deep work sprint. Avoid switching tabs until the timer ends.
           </p>
           <div className="mt-4 flex gap-2">
@@ -220,13 +220,13 @@ export default function FocusMode() {
             </button>
             <button
               onClick={pauseTimer}
-              className="px-4 py-1.5 rounded-xl border border-slate-700 text-xs text-slate-300 hover:border-slate-500"
+              className="px-4 py-1.5 rounded-xl border border-gray-300 text-xs text-gray-200 hover:border-gray-500"
             >
               ⏸ Pause
             </button>
             <button
               onClick={resetTimer}
-              className="px-4 py-1.5 rounded-xl border border-slate-700 text-xs text-slate-300 hover:border-slate-500"
+              className="px-4 py-1.5 rounded-xl border border-gray-300 text-xs text-gray-200 hover:border-gray-500"
             >
               ⟲ Reset
             </button>

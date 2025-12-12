@@ -5,13 +5,13 @@ import { useAuth } from "../context/AuthContext.jsx";
 
 function Column({ title, tasks, accent, onStatusChange, onDelete }) {
   return (
-    <div className="flex-1 bg-slate-900/60 border border-slate-800 rounded-2xl p-3 md:p-4 flex flex-col min-h-[260px]">
+    <div className="flex-1 bg-white border border-gray-200 rounded-2xl p-3 md:p-4 flex flex-col min-h-[260px]">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-semibold text-slate-100 flex items-center gap-2">
+        <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
           <span className={`inline-block w-2 h-2 rounded-full ${accent}`}></span>
           {title}
         </h2>
-        <span className="text-[11px] text-slate-500">
+        <span className="text-[11px] text-gray-500">
           {tasks.length} task{tasks.length !== 1 && "s"}
         </span>
       </div>
@@ -19,29 +19,29 @@ function Column({ title, tasks, accent, onStatusChange, onDelete }) {
         {tasks.map((task) => (
           <div
             key={task._id}
-            className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs hover:border-indigo-400/70 hover:shadow-md transition group"
+            className="bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-xs hover:border-indigo-400/70 hover:shadow-md transition group"
           >
             <div className="flex justify-between gap-2 items-start">
               <div className="flex-1 min-w-0">
-                <div className="font-medium text-slate-100 truncate">
+                <div className="font-medium text-gray-900 truncate">
                   {task.title}
                 </div>
                 {task.description && (
-                  <div className="mt-1 text-[11px] text-slate-400 line-clamp-2">
+                  <div className="mt-1 text-[11px] text-gray-500 line-clamp-2">
                     {task.description}
                   </div>
                 )}
               </div>
               <button
                 onClick={() => onDelete && onDelete(task._id)}
-                className="opacity-0 group-hover:opacity-100 text-[11px] text-slate-500 hover:text-red-400 transition"
+                className="opacity-0 group-hover:opacity-100 text-[11px] text-gray-500 hover:text-red-400 transition"
                 title="Delete task"
               >
                 ✕
               </button>
             </div>
 
-            <div className="mt-2 flex items-center justify-between text-[11px] text-slate-500 gap-2">
+            <div className="mt-2 flex items-center justify-between text-[11px] text-gray-500 gap-2">
               <span className="truncate">
                 {task.dueDate
                   ? `Due: ${new Date(task.dueDate).toLocaleDateString()}`
@@ -50,7 +50,7 @@ function Column({ title, tasks, accent, onStatusChange, onDelete }) {
               <select
                 value={task.status}
                 onChange={(e) => onStatusChange(task._id, e.target.value)}
-                className="bg-slate-900 border border-slate-700 rounded-full px-2 py-0.5 text-[10px] text-slate-300"
+                className="bg-white border border-gray-300 rounded-full px-2 py-0.5 text-[10px] text-gray-700"
               >
                 <option value="todo">To do</option>
                 <option value="in-progress">In progress</option>
@@ -60,7 +60,7 @@ function Column({ title, tasks, accent, onStatusChange, onDelete }) {
           </div>
         ))}
         {tasks.length === 0 && (
-          <div className="text-xs text-slate-500 italic">
+          <div className="text-xs text-gray-500 italic">
             No tasks here yet.
           </div>
         )}
@@ -288,14 +288,14 @@ export default function Dashboard() {
     <div className="space-y-4">
       <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3 mb-4 w-full">
-          <h1 className="text-2xl font-semibold text-slate-50">Dashboard</h1>
+          <h1 className="text-2xl font-semibold text-gray-200">Dashboard</h1>
 
           <div className="ml-auto flex items-center gap-2 text-xs">
-            <span className="text-slate-400">Board:</span>
+            <span className="text-gray-200">Board:</span>
             <select
               value={selectedBoard}
               onChange={(e) => setSelectedBoard(e.target.value)}
-              className="px-2 py-1 rounded-lg bg-slate-900 border border-slate-700 text-slate-100 text-xs"
+              className="px-2 py-1 rounded-lg border border-gray-100 text-gray-200 text-xs"
             >
               <option value="personal">Personal</option>
               {teams.map((t) => (
@@ -309,19 +309,19 @@ export default function Dashboard() {
       </header>
 
       {suggestion && (
-        <div className="text-xs md:text-sm text-amber-200 bg-amber-500/10 border border-amber-400/40 rounded-xl px-3 py-2">
+        <div className="text-xs md:text-sm text-amber-500 bg-amber-600/10 border border-amber-500/40 rounded-xl px-3 py-2">
           💡 {suggestion}
         </div>
       )}
 
       {/* Quick add task */}
-      <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-2">
-        <h2 className="text-sm font-semibold text-slate-100">
-          Quick add task
+      <section className="bg-white/70 border border-gray-200 rounded-2xl p-4 space-y-2">
+        <h2 className="text-1X1 font-bold text-gray-900">
+            QUICK ADD TASK
         </h2>
         <div className="flex flex-col md:flex-row gap-2 text-xs">
           <input
-            className="flex-1 px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-900 text-slate-100"
+            className="flex-1 px-3 py-1.5 rounded-xl border border-gray-300 bg-white text-gray-900"
             placeholder="Task title (required)…"
             type="text"
             value={newTaskTitle}
@@ -329,19 +329,19 @@ export default function Dashboard() {
           />
           <input
             type="date"
-            className="px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-900 text-slate-100"
+            className="px-3 py-1.5 rounded-xl border border-gray-300 bg-white text-gray-900"
             value={newTaskDueDate}
             onChange={(e) => setNewTaskDueDate(e.target.value)}
           />
           <button
             onClick={handleCreateTask}
-            className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-slate-50 font-medium"
+            className="px-3 py-1.5 rounded-xl bg-white hover:bg-gray-200 text-gray-200 font-medium"
           >
             + Add
           </button>
         </div>
         <textarea
-          className="mt-2 w-full px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-900 text-slate-100 text-xs"
+          className="mt-2 w-full px-3 py-1.5 rounded-xl border border-gray-300 bg-white text-gray-900 text-xs"
           rows={2}
           placeholder="Optional description…"
           value={newTaskDescription}
@@ -354,25 +354,25 @@ export default function Dashboard() {
 
       {/* Columns */}
       {loading ? (
-        <div className="text-xs text-slate-400">Loading tasks…</div>
+        <div className="text-xs text-gray-700 ">Loading tasks…</div>
       ) : (
         <section className="grid md:grid-cols-3 gap-3 md:gap-4">
           <Column
-            title="To Do"
+            title="TO-DO"
             tasks={todo}
             accent="bg-sky-400"
             onStatusChange={handleStatusChange}
             onDelete={handleDeleteTask}
           />
           <Column
-            title="In Progress"
+            title="IN PROGRESS"
             tasks={inProgress}
             accent="bg-amber-400"
             onStatusChange={handleStatusChange}
             onDelete={handleDeleteTask}
           />
           <Column
-            title="Done"
+            title="DONE"
             tasks={done}
             accent="bg-emerald-400"
             onStatusChange={handleStatusChange}
