@@ -1,3 +1,4 @@
+// backend/utils/ensureUser.js
 const User = require("../models/User");
 
 async function ensureUser(firebaseUser) {

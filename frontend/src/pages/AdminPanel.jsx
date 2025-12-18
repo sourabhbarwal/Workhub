@@ -505,7 +505,7 @@ export default function AdminPanel() {
                                 {m.name}
                               </span>
                             </div>
-                            <span className="px-2 py-0.5 rounded-full bg-white/60 text-gray-700 text-[11px]">
+                            <span className="px-2 py-0.5 rounded-full border bg-white/60 text-gray-700 text-[11px]">
                               {m.role}
                             </span>
                           </li>
@@ -595,10 +595,10 @@ export default function AdminPanel() {
                                   <span
                                     className={`text-[11px] px-2 py-0.5 rounded-full self-start ${
                                       t.status === "done"
-                                        ? "bg-emerald-500/20 text-emerald-300"
+                                        ? "bg-emerald-500/20 text-emerald-700 border"
                                         : t.status === "in-progress"
-                                        ? "bg-amber-500/20 text-amber-300"
-                                        : "bg-gray-900/60 text-gray-300"
+                                        ? "bg-amber-500/20 text-amber-700 border"
+                                        : "bg-gray-900/60 text-gray-300 border"
                                     }`}
                                   >
                                     {t.status}
